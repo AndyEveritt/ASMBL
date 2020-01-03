@@ -32,6 +32,11 @@ class CamGcodeLine:
         return float(gcode.split('Z')[1].split(' ')[0])
 
 
+class CamOperation:
+    def __init__(self, lines):
+        self.lines = lines
+
+
 class CamGcodeLayer:
     def __init__(self):
         self.initiate_at = None  # height to print to before running the operation
@@ -77,7 +82,7 @@ class Parser:
         """ Takes fusion360 CAM gcode and splits the operations by execution height """
         tmp_operation_list = gcode_sub.split('\n\n')
 
-        operations = []
+        operations = [None]
 
         for i, operation in enumerate(tmp_operation_list):
             if i == 0:  # ignore setup gcode
@@ -85,11 +90,29 @@ class Parser:
 
             lines = operation.split('\n')
             name = lines.pop(0)
-            lines.reverse() # required since printing is bottom up, but CAM is top down
+            lines.reverse()  # required since printing is bottom up, but CAM is top down
             lines = [line for line in lines if line != '']
 
+            operations.append([])
+
+            # extract information from string
+            lines = [CamGcodeLine(line, name) for line in lines]
+
+            retraction_height = max(line.layer_height for line in lines)
+
+            op_start = 0
+            retracted = True
             for index, line in enumerate(lines):
-                lines[index] = CamGcodeLine(line, name)
+                if line.layer_height == retraction_height:
+                    if retracted is False:
+                        op_end = index
+                        operations[i].append(lines[op_start:op_end])
+                        op_start = op_end
+                    retracted = True
+                elif line.layer_height < retraction_height:
+                    retracted = False
+
+                
 
     def merge_gcode(self, gcode_add, cam_instructions):
         """ Takes the individual CAM instructions and merges them into the additive file from Simplify3D """
@@ -104,7 +127,7 @@ if __name__ == "__main__":
     gcode_add_file = open("gcode/additive_box.gcode", "r")
     gcode_add = gcode_add_file.read()
 
-    gcode_sub_file = open("gcode/double_box_side_top_no_arc.nc", "r")
+    gcode_sub_file = open("gcode/double_box_side_top_lead_no_arc.nc", "r")
     gcode_sub = gcode_sub_file.read()
 
     parser = Parser(gcode_add, gcode_sub)
