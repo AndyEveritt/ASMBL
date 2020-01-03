@@ -40,18 +40,23 @@ class CamGcodeLine:
         return float(gcode.split('Z')[1].split(' ')[0])
 
 
-class CamOperation:
-    def __init__(self, lines):
-        self.lines = lines
-
-
 class CamGcodeLayer:
     """ Stores all the CAM operations in a specific layer. """
 
     def __init__(self, height, operations):
-        self.initial_height = height
-        self.initiate_at = None  # height to print to before running the operation
+        self.height = height
         self.operations = operations
+        self.gcode = self.parse_gcode(self.operations)
+        self.layer_height = None  # height to print to before running the operation
+
+    def parse_gcode(self, operations):
+        """ Combines the gcode lines from all the operations into a single string """
+        gcode = ''
+
+        for op in operations:
+            gcode += op.gcode + '\n'
+
+        return gcode
 
 
 class Parser:
@@ -84,7 +89,7 @@ class Parser:
 
             if 2*i == len(tmp_list) - 1:
                 gcode_add_layers.append(Simplify3DGcodeLayer(
-                    layer, 'end', gcode_add_layers[-1].layer_height))
+                    layer, 'end', inf))
                 continue
 
             gcode_add_layers.append(Simplify3DGcodeLayer(layer))
@@ -126,7 +131,6 @@ class Parser:
                     retracted = False
 
         self.order_cam_operations_by_layer(operations)
-        self.operations = operations
 
     def order_cam_operations_by_layer(self, operations):
         """ Takes a list of cam operations and calculates the layer that they should be executed """
@@ -141,24 +145,45 @@ class Parser:
                     ordered_operations.append(
                         CamGcodeLayer(op_height, op_instance))
 
-        ordered_operations.sort(key=lambda x: x.initial_height)
+        ordered_operations.sort(key=lambda x: x.height)
         for i, operation in enumerate(ordered_operations):
             later_ops = [
-                op for op in ordered_operations if op.initial_height > operation.initial_height]
+                op for op in ordered_operations if op.height > operation.height]
             try:
-                operation.initiate_at = min(
-                    [op.initial_height for op in later_ops])
+                operation.layer_height = min(
+                    [op.height for op in later_ops])
             except ValueError:
-                operation.initiate_at = operation.initial_height
+                operation.layer_height = operation.height
 
-        self.ordered_operations = ordered_operations
+        self.cam_operations = ordered_operations
+        self.merged_gcode = self.merge_gcode(
+            self.gcode_add_layers, self.cam_operations)
 
-    def merge_gcode(self, gcode_add, cam_instructions):
+    def merge_gcode(self, gcode_add, cam_operations):
         """ Takes the individual CAM instructions and merges them into the additive file from Simplify3D """
-        pass
+        merged_gcode = gcode_add + cam_operations
+        merged_gcode.sort(key=lambda x: x.layer_height)
 
-    def create_output_file(self, file):
+        self.merged_gcode_script = ''
+        prev_layer = None
+        for layer in merged_gcode:
+            self.tool_change(layer, prev_layer)
+            prev_layer = layer
+            self.merged_gcode_script += layer.gcode
+
+        return merged_gcode
+
+    def tool_change(self, layer, prev_layer):
+        if type(layer) != type(prev_layer):
+            if type(layer) == Simplify3DGcodeLayer:
+                self.merged_gcode_script += 'T0\n'
+            elif type(layer == CamGcodeLayer):
+                self.merged_gcode_script += 'T3\n'
+
+    def create_output_file(self, gcode):
         """ Saves the file to the output folder """
+        output_file = open("output/tmp.gcode", "w")
+        output_file.write(gcode)
         pass
 
 
@@ -170,4 +195,5 @@ if __name__ == "__main__":
     gcode_sub = gcode_sub_file.read()
 
     parser = Parser(gcode_add, gcode_sub)
+    parser.create_output_file(parser.merged_gcode_script)
     pass
