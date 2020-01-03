@@ -4,6 +4,9 @@ import re
 
 
 class Simplify3DGcodeLayer:
+    """Stores a complete layer of gcode produced in Simplify3d
+    """
+
     def __init__(self, gcode, name=None, layer_height=None):
         self.gcode = gcode
         self.name = name
@@ -19,16 +22,20 @@ class Simplify3DGcodeLayer:
         return gcode.split(',')[0][2:]
 
     def get_layer_height(self, gcode):
-        return gcode.split('\n')[0][15:]
+        return float(gcode.split('\n')[0][15:])
 
 
 class CamGcodeLine:
+    """Stores a single line of fusion360 CAM gcode."""
+
     def __init__(self, gcode, name=None):
+        """Initialise object."""
         self.gcode = gcode
         self.name = name
         self.layer_height = self.get_layer_height(self.gcode)
 
     def get_layer_height(self, gcode):
+        """Return the layer height of single line of gcode."""
         return float(gcode.split('Z')[1].split(' ')[0])
 
 
@@ -38,12 +45,14 @@ class CamOperation:
 
 
 class CamGcodeLayer:
+    """ Stores all the CAM operations in a specific layer. """
     def __init__(self):
         self.initiate_at = None  # height to print to before running the operation
         self.operations = []
 
 
 class Parser:
+    """ Main parsing class. """
     def __init__(self, gcode_add, gcode_sub):
         self.gcode_add = gcode_add
         self.gcode_sub = gcode_sub
@@ -111,8 +120,6 @@ class Parser:
                     retracted = True
                 elif line.layer_height < retraction_height:
                     retracted = False
-
-                
 
     def merge_gcode(self, gcode_add, cam_instructions):
         """ Takes the individual CAM instructions and merges them into the additive file from Simplify3D """

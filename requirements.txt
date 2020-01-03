@@ -1,2 +1,13 @@
 autopep8==1.4.4
 pycodestyle==2.5.0
+autopep8==1.4.4
+pkg-resources==0.0.0
+pycodestyle==2.5.0
+pydocstyle==5.0.1
+snowballstemmer==2.0.0
+autopep8==1.4.4
+pep8==1.7.1
+pkg-resources==0.0.0
+pycodestyle==2.5.0
+pydocstyle==5.0.1
+snowballstemmer==2.0.0
