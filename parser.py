@@ -13,22 +13,38 @@ class Simplify3DGcodeLayer:
             self.name = self.get_name(self.gcode)
 
         if layer_height is None:
-            self.layer_height = self.get_initial_height(self.gcode)
+            self.layer_height = self.get_layer_height(self.gcode)
 
     def get_name(self, gcode):
         return gcode.split(',')[0][2:]
 
-    def get_initial_height(self, gcode):
+    def get_layer_height(self, gcode):
         return gcode.split('\n')[0][15:]
 
 
-class Parser:
+class CamGcodeLine:
+    def __init__(self, gcode, name=None):
+        self.gcode = gcode
+        self.name = name
+        self.layer_height = self.get_layer_height(self.gcode)
 
+    def get_layer_height(self, gcode):
+        return float(gcode.split('Z')[1].split(' ')[0])
+
+
+class CamGcodeLayer:
+    def __init__(self):
+        self.initiate_at = None  # height to print to before running the operation
+        self.operations = []
+
+
+class Parser:
     def __init__(self, gcode_add, gcode_sub):
         self.gcode_add = gcode_add
         self.gcode_sub = gcode_sub
 
         self.split_additive_layers(self.gcode_add)
+        self.split_cam_layers(self.gcode_sub)
 
     def split_additive_layers(self, gcode_add):
         """ Takes Simplify3D gcode and splits in by layer """
@@ -59,7 +75,21 @@ class Parser:
 
     def split_cam_layers(self, gcode_sub):
         """ Takes fusion360 CAM gcode and splits the operations by execution height """
-        pass
+        tmp_operation_list = gcode_sub.split('\n\n')
+
+        operations = []
+
+        for i, operation in enumerate(tmp_operation_list):
+            if i == 0:  # ignore setup gcode
+                continue
+
+            lines = operation.split('\n')
+            name = lines.pop(0)
+            lines.reverse() # required since printing is bottom up, but CAM is top down
+            lines = [line for line in lines if line != '']
+
+            for index, line in enumerate(lines):
+                lines[index] = CamGcodeLine(line, name)
 
     def merge_gcode(self, gcode_add, cam_instructions):
         """ Takes the individual CAM instructions and merges them into the additive file from Simplify3D """
