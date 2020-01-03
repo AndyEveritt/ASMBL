@@ -1,4 +1,7 @@
-from math import ceil
+from math import (
+    inf,
+    ceil,
+)
 
 import re
 
@@ -45,9 +48,10 @@ class CamOperation:
 class CamGcodeLayer:
     """ Stores all the CAM operations in a specific layer. """
 
-    def __init__(self):
+    def __init__(self, height, operations):
+        self.initial_height = height
         self.initiate_at = None  # height to print to before running the operation
-        self.operations = []
+        self.operations = operations
 
 
 class Parser:
@@ -121,7 +125,33 @@ class Parser:
                 elif line.layer_height < retraction_height:
                     retracted = False
 
+        self.order_cam_operations_by_layer(operations)
         self.operations = operations
+
+    def order_cam_operations_by_layer(self, operations):
+        """ Takes a list of cam operations and calculates the layer that they should be executed """
+        min_height = inf
+        ordered_operations = []
+        for operation in operations:
+            if operation:
+                for op_instance in operation:
+                    op_height = min(
+                        [height.layer_height for height in op_instance])
+                    min_height = min((min_height, op_height))
+                    ordered_operations.append(
+                        CamGcodeLayer(op_height, op_instance))
+
+        ordered_operations.sort(key=lambda x: x.initial_height)
+        for i, operation in enumerate(ordered_operations):
+            later_ops = [
+                op for op in ordered_operations if op.initial_height > operation.initial_height]
+            try:
+                operation.initiate_at = min(
+                    [op.initial_height for op in later_ops])
+            except ValueError:
+                operation.initiate_at = operation.initial_height
+
+        self.ordered_operations = ordered_operations
 
     def merge_gcode(self, gcode_add, cam_instructions):
         """ Takes the individual CAM instructions and merges them into the additive file from Simplify3D """
@@ -136,7 +166,7 @@ if __name__ == "__main__":
     gcode_add_file = open("gcode/additive_box.gcode", "r")
     gcode_add = gcode_add_file.read()
 
-    gcode_sub_file = open("gcode/double_box_3dadaptive.nc", "r")
+    gcode_sub_file = open("gcode/double_box_side_top_lead_no_arc.nc", "r")
     gcode_sub = gcode_sub_file.read()
 
     parser = Parser(gcode_add, gcode_sub)
