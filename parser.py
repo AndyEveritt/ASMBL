@@ -108,7 +108,6 @@ class Parser:
 
             lines = operation.split('\n')
             name = lines.pop(0)
-            lines.reverse()  # required since printing is bottom up, but CAM is top down
             lines = [line for line in lines if line != '']
 
             operations.append([])
@@ -156,22 +155,25 @@ class Parser:
                 operation.layer_height = operation.height
 
         self.cam_operations = ordered_operations
-        self.merged_gcode = self.merge_gcode(
+        self.merged_gcode = self.merge_gcode_layers(
             self.gcode_add_layers, self.cam_operations)
 
-    def merge_gcode(self, gcode_add, cam_operations):
+    def merge_gcode_layers(self, gcode_add, cam_operations):
         """ Takes the individual CAM instructions and merges them into the additive file from Simplify3D """
         merged_gcode = gcode_add + cam_operations
         merged_gcode.sort(key=lambda x: x.layer_height)
 
+        self.create_gcode_script(merged_gcode)
+
+        return merged_gcode
+
+    def create_gcode_script(self, gcode):
         self.merged_gcode_script = ''
         prev_layer = None
         for layer in merged_gcode:
             self.tool_change(layer, prev_layer)
             prev_layer = layer
             self.merged_gcode_script += layer.gcode
-
-        return merged_gcode
 
     def tool_change(self, layer, prev_layer):
         if type(layer) != type(prev_layer):
