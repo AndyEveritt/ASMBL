@@ -67,7 +67,7 @@ class Parser:
         self.gcode_sub = gcode_sub
 
         self.split_additive_layers(self.gcode_add)
-        self.split_cam_layers(self.gcode_sub)
+        self.split_cam_operations(self.gcode_sub)
 
     def split_additive_layers(self, gcode_add):
         """ Takes Simplify3D gcode and splits in by layer """
@@ -96,7 +96,7 @@ class Parser:
 
         self.gcode_add_layers = gcode_add_layers
 
-    def split_cam_layers(self, gcode_sub):
+    def split_cam_operations(self, gcode_sub):
         """ Takes fusion360 CAM gcode and splits the operations by execution height """
         tmp_operation_list = gcode_sub.split('\n\n')
 
