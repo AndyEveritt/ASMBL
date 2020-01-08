@@ -31,9 +31,32 @@ class CamGcodeLine:
     """ Stores a single line of fusion360 CAM gcode. """
 
     def __init__(self, gcode, name=None):
-        self.gcode = gcode
+        self.gcode = self.offset_gcode(gcode, (150, 100, 1.417))
         self.name = name
         self.layer_height = self.get_layer_height(self.gcode)
+
+    def offset_gcode(self, gcode, offset):
+        gcode_segments = gcode.split(' ')
+        offset_gcode = ''
+        for gcode_segment in gcode_segments:
+            if gcode_segment[0] == 'X':
+                x_pos = float(gcode_segment[1:])
+                x_pos += offset[0]
+                gcode_segment = gcode_segment[0] + str(x_pos)
+
+            elif gcode_segment[0] == 'Y':
+                y_pos = float(gcode_segment[1:])
+                y_pos += offset[1]
+                gcode_segment = gcode_segment[0] + str(y_pos)
+            
+            elif gcode_segment[0] == 'Z':
+                z_pos = float(gcode_segment[1:])
+                z_pos += offset[2]
+                gcode_segment = gcode_segment[0] + str(z_pos)
+
+            offset_gcode += ' ' + gcode_segment
+
+        return offset_gcode[1:]
 
     def get_layer_height(self, gcode):
         """Return the layer height of single line of gcode."""
@@ -169,8 +192,8 @@ class Parser:
 
     def create_gcode_script(self, gcode):
         self.merged_gcode_script = ''
-        prev_layer = None
-        for layer in merged_gcode:
+        prev_layer = Simplify3DGcodeLayer
+        for layer in gcode:
             self.tool_change(layer, prev_layer)
             prev_layer = layer
             self.merged_gcode_script += layer.gcode
@@ -190,7 +213,7 @@ class Parser:
 
 
 if __name__ == "__main__":
-    gcode_add_file = open("gcode/additive_box.gcode", "r")
+    gcode_add_file = open("gcode/box.gcode", "r")
     gcode_add = gcode_add_file.read()
 
     gcode_sub_file = open("gcode/double_box_side_top_lead_no_arc.nc", "r")
