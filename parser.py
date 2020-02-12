@@ -31,7 +31,7 @@ class CamGcodeLine:
     """ Stores a single line of fusion360 CAM gcode. """
 
     def __init__(self, gcode, name=None):
-        self.gcode = self.offset_gcode(gcode, (150, 100, 1.417))
+        self.gcode = self.offset_gcode(gcode, (150, 100, 1.017))
         self.name = name
         self.layer_height = self.get_layer_height(self.gcode)
 
@@ -173,7 +173,7 @@ class Parser:
                 op for op in ordered_operations if op.height > operation.height]
             try:
                 operation.layer_height = min(
-                    [op.height for op in later_ops])
+                    [op.height for op in later_ops]) + 0.401
             except ValueError:
                 operation.layer_height = operation.height
 
@@ -213,10 +213,10 @@ class Parser:
 
 
 if __name__ == "__main__":
-    gcode_add_file = open("gcode/box.gcode", "r")
+    gcode_add_file = open("gcode/Box_bore.gcode", "r")
     gcode_add = gcode_add_file.read()
 
-    gcode_sub_file = open("gcode/double_box_side_top_lead_no_arc.nc", "r")
+    gcode_sub_file = open("gcode/box_bore.nc", "r")
     gcode_sub = gcode_sub_file.read()
 
     parser = Parser(gcode_add, gcode_sub)
