@@ -186,7 +186,7 @@ class Parser:
                 operation.layer_height = min(
                     [op.height for op in later_ops]) + self.config['PrintSettings']['layer_height'] * self.config['CamSettings']['layer_dropdown']
             except ValueError:
-                operation.layer_height = operation.height
+                operation.layer_height = operation.height + self.config['PrintSettings']['layer_height'] * self.config['CamSettings']['layer_dropdown']
 
         self.cam_operations = ordered_operations
         self.merged_gcode = self.merge_gcode_layers(
