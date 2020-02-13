@@ -14,7 +14,7 @@
         "layer_height": 0.15
     },
     "CamSettings": {
-        "_comment": "layer_dropdown: how many layers the tip of the cutter should be lower than the layers being cut",
-        "layer_dropdown": 2
+        "layer_dropdown": 2,
+        "layer_intersect": 0.5
     }
 }

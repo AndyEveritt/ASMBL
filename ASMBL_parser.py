@@ -89,7 +89,9 @@ class Parser:
         self.config = config
         self.offset = (config['Printer']['bed_centre_x'],
                        config['Printer']['bed_centre_y'],
-                       config['PrintSettings']['raft_height'] - config['PrintSettings']['layer_height']/2
+
+                       config['PrintSettings']['raft_height'] -
+                       config['PrintSettings']['layer_height']*config['CamSettings']['layer_intersect']
                        )
 
         self.open_files(self.config)
@@ -186,7 +188,8 @@ class Parser:
                 operation.layer_height = min(
                     [op.height for op in later_ops]) + self.config['PrintSettings']['layer_height'] * self.config['CamSettings']['layer_dropdown']
             except ValueError:
-                operation.layer_height = operation.height + self.config['PrintSettings']['layer_height'] * self.config['CamSettings']['layer_dropdown']
+                operation.layer_height = operation.height + \
+                    self.config['PrintSettings']['layer_height'] * self.config['CamSettings']['layer_dropdown']
 
         self.cam_operations = ordered_operations
         self.merged_gcode = self.merge_gcode_layers(
