@@ -1,0 +1,20 @@
+{
+    "InputFiles": {
+        "additive_gcode": "gcode/cyclodial_gear/additive.gcode",
+        "subtractive_gcode": "gcode/cyclodial_gear/cam.nc"
+    },
+    "Printer": {
+        "bed_centre_x": 150,
+        "bed_centre_y": 100,
+        "print_tool": "T0",
+        "cam_tool": "T3"
+    },
+    "PrintSettings": {
+        "raft_height": 1.167,
+        "layer_height": 0.15
+    },
+    "CamSettings": {
+        "_comment": "layer_dropdown: how many layers the tip of the cutter should be lower than the layers being cut",
+        "layer_dropdown": 2
+    }
+}
