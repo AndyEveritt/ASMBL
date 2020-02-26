@@ -11,7 +11,7 @@
     },
     "PrintSettings": {
         "raft_height": 1.167,
-        "layer_height": 0.15
+        "layer_height": 0.2
     },
     "CamSettings": {
         "layer_dropdown": 2,
