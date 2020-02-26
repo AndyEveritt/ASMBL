@@ -135,3 +135,15 @@ Update the `config.json` so that the following settings are correct for your pro
     }
 }
 ```
+
+## Program
+
+The program takes the following arguments:
+
+Arg (long) | Arg (short) | Default | Usage
+---------- | ----------- | ------- | -----
+`--config` | `-C` | `config.json` | Path to the configuration JSON file
+
+## Run
+
+To run the program, ensure the python virtual environment is enabled, then use `python main.py`
