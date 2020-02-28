@@ -58,8 +58,9 @@ The CAMing proceedures for ASMBL can be configured with the following processes:
 
 Process | Usage
 ------- | -----
-2D Contour | Used for side walls of parts
+2D Contour | Used for vertical side walls of parts
 2D Adaptive | Used for top surfacing
+3D Contour | Used for vertical & close to vertical side walls (including chamfers & filets). May not be able to cut internal features (ie walls with a roof over them)
 
 #### 2D Contour
 
@@ -98,6 +99,29 @@ Process | Usage
   * Disable `Stock to Leave`
 * `Linking`
   * Set `Vertical Lead In/Out Radius` to `0` mm
+
+
+#### 3D Contour
+
+* `Tool`
+  * Select/create a cutting tool with appropriate dimensions for what is installed on you ASMBL machine
+* `Geometry`
+  * Select the boundry contours for the sides you would like to cut (everything in the boundry will be cut)
+  * You can specify an out and inner boundary to only cut a certain region
+* `Heights`
+  * Set the `Clearance Height`, `Retract Height`, and `Feed Height` equal
+    * These must be equal for all processes
+  * Set the `Top Height` and `Bottom Height` appropriately for the desired process
+    * ie top and bottom of the surface
+* `Passes`
+  * Set `Direction` to `Conventional`
+  * Set `Finishing Overlap` to non zero for better finish
+  * Set `Maximum Stepdown` to be equal to ~0.5-2 layers
+  * Disable `Stock to Leave`
+* `Linking`
+  * Set `Maximum Stay Down Distance` to `0` mm
+  * Set `Vertical Lead-In Radius` to `0` mm
+  * Set `Ramp Type` to `Plunge`
 
 ### Post Processing
 
