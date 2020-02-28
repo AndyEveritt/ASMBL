@@ -99,6 +99,7 @@ Process | Usage
   * Disable `Stock to Leave`
 * `Linking`
   * Set `Vertical Lead In/Out Radius` to `0` mm
+  * Set `Ramp Type` to `Plunge`
 
 
 #### 3D Contour
