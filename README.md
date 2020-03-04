@@ -84,6 +84,9 @@ Process | Usage
   * Set `Vertical Lead-In Radius` to `0` mm
   * Disable `Ramp`
 
+2D Contour can be used when fine control over the process is needed. Undercuts can be done using this process.
+![Example: 2D Contour undercuts](docs/images/2d_contour_undercuts.png)
+
 #### 2D Adaptive
 
 * `Tool`
@@ -101,6 +104,9 @@ Process | Usage
   * Set `Vertical Lead In/Out Radius` to `0` mm
   * Set `Ramp Type` to `Plunge`
 
+
+Multiple surfaces at different heights can be selected with the same process. This can help reduce setup time in Fusion
+![Example](/docs/images/2d_adaptive_selection.png)
 
 #### 3D Contour
 
@@ -123,6 +129,17 @@ Process | Usage
   * Set `Maximum Stay Down Distance` to `0` mm
   * Set `Vertical Lead-In Radius` to `0` mm
   * Set `Ramp Type` to `Plunge`
+
+
+
+3D Contour can be used for most none flat surfaces that have nothing above them. They are good for quickly CAM'ing a large number of faces
+![Example: 3D Contour 1](./docs/images/3d_contour_1.png)
+
+The machining boundary can be used to restrict which faces are machined. Here the centre sloped surface is diselected but everything within the inner centre hole is machined.
+![Example: 3D Contour machining boundaries](/docs/images/3d_contour_machining_boundaries.png)
+
+Undercuts do not work with 3D Contour. 2D Contour can be used for this instead.
+![Example: 3D Contour undercuts](/docs/images/3d_contour_undercuts.png)
 
 ### Post Processing
 
