@@ -1,7 +1,7 @@
 {
     "InputFiles": {
-        "additive_gcode": "gcode/PR-TC-TOOLHEAD-IM.gcode",
-        "subtractive_gcode": "gcode/PR-TC-TOOLHEAD-IM.nc"
+        "additive_gcode": "gcode/demo.gcode",
+        "subtractive_gcode": "gcode/demo.nc"
     },
     "Printer": {
         "bed_centre_x": 150,
@@ -10,7 +10,7 @@
         "cam_tool": "T3"
     },
     "PrintSettings": {
-        "raft_height": 1.167,
+        "raft_height": 2.333,
         "layer_height": 0.2
     },
     "CamSettings": {

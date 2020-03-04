@@ -13,6 +13,7 @@ class Simplify3DGcodeLayer:
         self.gcode = gcode
         self.name = name
         self.layer_height = layer_height
+        self.last_print_tool = None
 
         if name is None:
             self.name = self.get_name(self.gcode)
