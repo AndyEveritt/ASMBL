@@ -15,5 +15,8 @@
     "CamSettings": {
         "layer_dropdown": 2,
         "layer_intersect": 0.5
+    },
+    "OutputSettings": {
+        "filename": "tmp"
     }
 }

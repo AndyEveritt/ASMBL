@@ -230,7 +230,8 @@ class Parser:
 
     def create_output_file(self, gcode):
         """ Saves the file to the output folder """
-        output_file = open("output/tmp.gcode", "w")
+        file_path = "output/" + self.config['OutputSettings']['filename'] + ".gcode"
+        output_file = open(file_path, "w")
         output_file.write(gcode)
         pass
 

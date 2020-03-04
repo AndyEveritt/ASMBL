@@ -173,6 +173,9 @@ Update the `config.json` so that the following settings are correct for your pro
     "CamSettings": {
         "layer_dropdown": "How many layers the tip of the cutter should be lower than the layers being cut",
         "layer_intersect": "What percentage (0-1) of a layer line should the tip of the cutter sit at when cutting"
+    },
+    "OutputSettings": {
+        "filename": "Name of the output file containing the merged gcode script
     }
 }
 ```
@@ -188,3 +191,12 @@ Arg (long) | Arg (short) | Default | Usage
 ## Run
 
 To run the program, ensure the python virtual environment is enabled, then use `python main.py`
+
+The program will output the file with a name according the the config settings in the `output` folder. 
+
+>**Always preview the generated gcode in Simplify3D before attempting to print it**
+
+Set the coloring to `Active Toolhead` and enable `Travel moves` to ensure the part is using the correct tools at the correct times.
+
+The subtractive processes are displayed as travel moves, scroll through the layers to check the subtractive processes have been added at the correct point in the print (defined in `config.json`)
+![Example: Simplify3D preview](docs/images/simplify3d_preview.png)
