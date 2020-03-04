@@ -135,12 +135,15 @@ Multiple surfaces at different heights can be selected with the same process. Th
 
 
 3D Contour can be used for most none flat surfaces that have nothing above them. They are good for quickly CAM'ing a large number of faces.
+
 <img src="docs/images/3d_contour_1.png" width="480">
 
 The machining boundary can be used to restrict which faces are machined. Here the centre sloped surface is diselected but everything within the inner centre hole is machined.
+
 <img src="docs/images/3d_contour_machining_boundaries.png" width="480">
 
 Undercuts do not work with 3D Contour. 2D Contour can be used for this instead.
+
 <img src="docs/images/3d_contour_undercuts.png" width="480">
 
 ### Post Processing
@@ -201,4 +204,5 @@ The program will output the file with a name according the the config settings i
 Set the coloring to `Active Toolhead` and enable `Travel moves` to ensure the part is using the correct tools at the correct times.
 
 The subtractive processes are displayed as travel moves, scroll through the layers to check the subtractive processes have been added at the correct point in the print (defined in `config.json`)
+
 <img src="docs/images/simplify3d_preview.png" width="480">
