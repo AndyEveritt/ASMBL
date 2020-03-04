@@ -6,7 +6,6 @@
     "Printer": {
         "bed_centre_x": 150,
         "bed_centre_y": 100,
-        "print_tool": "T0",
         "cam_tool": "T3"
     },
     "PrintSettings": {

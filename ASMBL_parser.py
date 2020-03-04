@@ -13,7 +13,6 @@ class Simplify3DGcodeLayer:
         self.gcode = gcode
         self.name = name
         self.layer_height = layer_height
-        self.last_print_tool = None
 
         if name is None:
             self.name = self.get_name(self.gcode)
@@ -94,6 +93,8 @@ class Parser:
                        config['PrintSettings']['raft_height'] -
                        config['PrintSettings']['layer_height']*config['CamSettings']['layer_intersect']
                        )
+
+        self.last_process_tool = None
 
         self.open_files(self.config)
         self.split_additive_layers(self.gcode_add)
@@ -207,16 +208,23 @@ class Parser:
 
     def create_gcode_script(self, gcode):
         self.merged_gcode_script = ''
-        prev_layer = Simplify3DGcodeLayer
+        prev_layer = gcode[0]
         for layer in gcode:
+            self.set_last_process_tool(prev_layer)
             self.tool_change(layer, prev_layer)
             prev_layer = layer
             self.merged_gcode_script += layer.gcode
 
+    def set_last_process_tool(self, layer):
+        if isinstance(layer, Simplify3DGcodeLayer):
+            process_list = layer.gcode.split('\nT')
+            if len(process_list) > 1:
+                self.last_process_tool = 'T' + process_list[-1].split('\n')[0]
+
     def tool_change(self, layer, prev_layer):
         if type(layer) != type(prev_layer):
             if type(layer) == Simplify3DGcodeLayer:
-                self.merged_gcode_script += self.config['Printer']['print_tool'] + '\n'
+                self.merged_gcode_script += self.last_process_tool + '\n'
             elif type(layer == CamGcodeLayer):
                 self.merged_gcode_script += self.config['Printer']['cam_tool'] + '\n'
 

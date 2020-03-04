@@ -147,7 +147,6 @@ Update the `config.json` so that the following settings are correct for your pro
     "Printer": {
         "bed_centre_x": mm from origin to bed centre in x axis,
         "bed_centre_y": mm from origin to bed centre in y axis,
-        "print_tool": Tool used to print part (eg "T0"),
         "cam_tool": Tool used for CAM (eg "T3")
     },
     "PrintSettings": {
