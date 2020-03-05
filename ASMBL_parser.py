@@ -224,7 +224,9 @@ class Parser:
     def tool_change(self, layer, prev_layer):
         if type(layer) != type(prev_layer):
             if type(layer) == Simplify3DGcodeLayer:
-                self.merged_gcode_script += self.last_process_tool + '\n'
+                first_gcode = layer.gcode.split('\n')[1]
+                if first_gcode[0] is not 'T':
+                    self.merged_gcode_script += self.last_process_tool + '\n'
             elif type(layer == CamGcodeLayer):
                 self.merged_gcode_script += self.config['Printer']['cam_tool'] + '\n'
 
