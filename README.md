@@ -130,7 +130,7 @@ Multiple surfaces at different heights can be selected with the same process. Th
 * `Linking`
   * Set `Maximum Stay Down Distance` to `0` mm
   * Set `Vertical Lead-In Radius` to `0` mm
-  * Set `Ramp Type` to `Plunge`
+  * Set `Ramp Type` to `Profile`
 
 
 
