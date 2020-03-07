@@ -1,6 +1,6 @@
 {
     "InputFiles": {
-        "additive_gcode": "gcode/Spinner_Demo.gcode",
+        "additive_gcode": "gcode/Spinner_Demo_MM.gcode",
         "subtractive_gcode": "gcode/demo.nc"
     },
     "Printer": {

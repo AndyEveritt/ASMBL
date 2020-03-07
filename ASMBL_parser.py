@@ -159,10 +159,10 @@ class Parser:
             line_heights = np.array([line.layer_height for line in lines])
             local_peaks = find_peaks(line_heights)[0]
 
-            operations[i].append(lines[0: local_peaks[0]])
+            operations[i].append(lines[0: local_peaks[0]+1])
 
-            for index, peak in enumerate(local_peaks[:-2]):
-                operations[i].append(lines[local_peaks[index]: local_peaks[index+1]-1])
+            for index, peak in enumerate(local_peaks[:-1]):
+                operations[i].append(lines[local_peaks[index]: local_peaks[index+1]+1])
             
             operations[i].append(lines[local_peaks[-1]:])
 
