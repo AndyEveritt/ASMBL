@@ -3,7 +3,10 @@ from math import (
     ceil,
 )
 
+from scipy.signal import find_peaks
+
 import re
+import numpy as np
 
 
 class Simplify3DGcodeLayer:
@@ -153,32 +156,26 @@ class Parser:
             # extract information from string
             lines = [CamGcodeLine(line, self.offset, name) for line in lines]
 
-            retraction_height = max(line.layer_height for line in lines)
+            line_heights = np.array([line.layer_height for line in lines])
+            local_peaks = find_peaks(line_heights)[0]
 
-            op_start = 0
-            retracted = True
-            for index, line in enumerate(lines):
-                if line.layer_height == retraction_height:
-                    if retracted is False:
-                        op_end = index
-                        operations[i].append(lines[op_start:op_end+1])
-                        op_start = op_end+1
-                    retracted = True
-                elif line.layer_height < retraction_height:
-                    retracted = False
+            operations[i].append(lines[0: local_peaks[0]])
+
+            for index, peak in enumerate(local_peaks[:-2]):
+                operations[i].append(lines[local_peaks[index]: local_peaks[index+1]-1])
+            
+            operations[i].append(lines[local_peaks[-1]:])
 
         self.order_cam_operations_by_layer(operations)
 
     def order_cam_operations_by_layer(self, operations):
         """ Takes a list of cam operations and calculates the layer that they should be executed """
-        min_height = inf
         ordered_operations = []
         for operation in operations:
             if operation:
                 for op_instance in operation:
                     op_height = min(
                         [height.layer_height for height in op_instance])
-                    min_height = min((min_height, op_height))
                     ordered_operations.append(
                         CamGcodeLayer(op_height, op_instance))
 
