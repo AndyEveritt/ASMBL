@@ -19,6 +19,12 @@ pip install -r requirements.txt
 
 # How to Setup
 
+## Material Choice
+
+Material | Comments
+-------- | --------
+PLA | Melts
+
 ## Simplify3D
 
 * Open the `ASMBL.factory` file
