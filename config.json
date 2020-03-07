@@ -1,6 +1,6 @@
 {
     "InputFiles": {
-        "additive_gcode": "gcode/demo.gcode",
+        "additive_gcode": "gcode/Spinner_Demo.gcode",
         "subtractive_gcode": "gcode/demo.nc"
     },
     "Printer": {
@@ -10,11 +10,11 @@
     },
     "PrintSettings": {
         "raft_height": 2.333,
-        "layer_height": 0.2
+        "layer_height": 0.3
     },
     "CamSettings": {
         "layer_dropdown": 2,
-        "layer_intersect": 0.5
+        "layer_intersect": 0.6
     },
     "OutputSettings": {
         "filename": "tmp"
