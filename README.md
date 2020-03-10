@@ -43,7 +43,7 @@ XT-CF10 | - | -
 
 Tab | Setting | Default | Effect | Other Notes
 --- | ------- | ------- | ------ | -----------
-Layer | Primary Layer Height | `0.2` | Layer height of the print | Thicker layers can create smoother surfaces with ASMBL (requires further testing). Layers less than 0.2 mm should be avoided
+Layer | Primary Layer Height | `0.3` | Layer height of the print | Thicker layers can create smoother surfaces with ASMBL (requires further testing). Layers less than 0.2 mm should be avoided
 Additions | Use Raft | `Enabled` | Prevents cutting into bed
 Other | Horizontal size compensation | `0.25` | Amount of horizontal cut-in | Any dimension that is not CAM'd will be this much too large
 
@@ -155,6 +155,8 @@ The machining boundary can be used to restrict which faces are machined. Here th
 Undercuts do not work with 3D Contour. 2D Contour can be used for this instead.
 
 <img src="docs/images/3d_contour_undercuts.png" width="480">
+
+>**If any of the above CAM information is wrong or can be improved, please add an issue and I will update the guide**
 
 ### Post Processing
 
