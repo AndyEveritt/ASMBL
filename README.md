@@ -24,6 +24,10 @@ pip install -r requirements.txt
 Material | Usage Advised | Comments
 -------- | ------------- | --------
 PLA | No | Melts too much when cutting, causes the cutter to gunk up and strands of plastic to be left on/around part.
+MatX (ASA) | Yes | Cuts well
+EDGE (PET) | - | -
+XT-CF10 | - | -
+
 
 ## Simplify3D
 
