@@ -6,6 +6,7 @@ from math import (
 from scipy.signal import find_peaks
 
 import re
+import os
 import numpy as np
 
 
@@ -163,7 +164,7 @@ class Parser:
 
             for index, peak in enumerate(local_peaks[:-1]):
                 operations[i].append(lines[local_peaks[index]: local_peaks[index+1]+1])
-            
+
             operations[i].append(lines[local_peaks[-1]:])
 
         self.order_cam_operations_by_layer(operations)
@@ -230,9 +231,11 @@ class Parser:
     def create_output_file(self, gcode):
         """ Saves the file to the output folder """
         file_path = "output/" + self.config['OutputSettings']['filename'] + ".gcode"
-        output_file = open(file_path, "w")
-        output_file.write(gcode)
-        pass
+
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        
+        with open(file_path, "w") as f:
+            f.write(gcode)
 
 
 if __name__ == "__main__":
