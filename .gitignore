@@ -2,6 +2,8 @@
 *tmp.gcode
 *tmp.nc
 *.stl
+*.dmp
+*.f3d
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
