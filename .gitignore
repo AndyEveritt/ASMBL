@@ -1,5 +1,7 @@
 .vscode
 *tmp.gcode
+*tmp.nc
+*.stl
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

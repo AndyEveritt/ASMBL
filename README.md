@@ -8,14 +8,8 @@ It takes 2 input files:
 
 These files require specific setup for this program to work
 
+Download the latest release for the `ASMBL.exe`, an example `config.json`, and the Simply3d factory file.
 
-# Installation
-
-```bash
-git clone {repo address}
-python3 -m venv env
-pip install -r requirements.txt
-```
 
 # How to Setup
 
@@ -128,7 +122,7 @@ Multiple surfaces at different heights can be selected with the same process. Th
   * Select the boundry contours for the sides you would like to cut (everything in the boundry will be cut)
   * You can specify an out and inner boundary to only cut a certain region
 * `Heights`
-  * Set the `Clearance Height`, `Retract Height`, and `Feed Height` equal
+  * Set the `Clearance Height` and `Retract Height` equal
     * These must be equal for all processes
   * Set the `Top Height` and `Bottom Height` appropriately for the desired process
     * ie top and bottom of the surface
@@ -145,6 +139,8 @@ Multiple surfaces at different heights can be selected with the same process. Th
 
 
 3D Contour can be used for most none flat surfaces that have nothing above them. They are good for quickly CAM'ing a large number of faces.
+
+None flat surfaces that have something above them can be CAM'd with some Fusion 360 magic. But this can be an involved process depending on the geometry.
 
 <img src="docs/images/3d_contour_1.png" width="480">
 
@@ -207,9 +203,9 @@ Arg (long) | Arg (short) | Default | Usage
 
 ## Run
 
-To run the program, ensure the python virtual environment is enabled, then use `python main.py`
+To run the program, ensure the `config.json` is configured correctly, then run the `ASMBL.exe`
 
-The program will output the file with a name according the the config settings in the `output` folder. 
+The program will output the file with a name according the the config settings in the `output` folder. (An output folder will be created in the same directory if one does not exist)
 
 >**Always preview the generated gcode in Simplify3D before attempting to print it**
 
@@ -218,3 +214,18 @@ Set the coloring to `Active Toolhead` and enable `Travel moves` to ensure the pa
 The subtractive processes are displayed as travel moves, scroll through the layers to check the subtractive processes have been added at the correct point in the print (defined in `config.json`)
 
 <img src="docs/images/simplify3d_preview.png" width="480">
+
+
+# Setting up the code for modification
+
+```bash
+git clone {repo address}
+python3 -m venv env
+pip install -r requirements.txt
+```
+
+To run the program, ensure the python virtual environment is enabled, then use `python main.py`
+
+## Compiling source code
+
+Run `pyinstaller --onefile main.py` to create the compiled `.exe` in the `dist` folder
