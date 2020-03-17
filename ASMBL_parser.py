@@ -28,7 +28,7 @@ class Simplify3DGcodeLayer:
         return gcode.split(',')[0][2:]
 
     def get_layer_height(self, gcode):
-        return float(gcode.split('\n')[0][15:])
+        return float(gcode.split('\n')[0].split('Z = ')[-1])
 
 
 class CamGcodeLine:
@@ -160,12 +160,15 @@ class Parser:
             line_heights = np.array([line.layer_height for line in lines])
             local_peaks = find_peaks(line_heights)[0]
 
-            operations[i].append(lines[0: local_peaks[0]+1])
+            if len(local_peaks) > 0:
+                operations[i].append(lines[0: local_peaks[0]+1])
 
-            for index, peak in enumerate(local_peaks[:-1]):
-                operations[i].append(lines[local_peaks[index]: local_peaks[index+1]+1])
+                for index, peak in enumerate(local_peaks[:-1]):
+                    operations[i].append(lines[local_peaks[index]: local_peaks[index+1]+1])
 
-            operations[i].append(lines[local_peaks[-1]:])
+                operations[i].append(lines[local_peaks[-1]:])
+            else:
+                operations[i].append(lines)
 
         self.order_cam_operations_by_layer(operations)
 
@@ -233,7 +236,7 @@ class Parser:
         file_path = "output/" + self.config['OutputSettings']['filename'] + ".gcode"
 
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        
+
         with open(file_path, "w") as f:
             f.write(gcode)
 
