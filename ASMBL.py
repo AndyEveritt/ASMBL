@@ -2,13 +2,70 @@ import adsk.core
 import adsk.fusion
 import traceback
 
+from .fusion_api import Handlers
+
 # Global list to keep all event handlers in scope.
 # This is only needed with Python.
 handlers = []
 
 
 def create_tab(workspace, tab_name):
-    pass
+    # Get all the tabs for the workspace:
+    allTabs = workspace.toolbarTabs
+    tabId = tab_name + 'TabId'
+
+    # check if tab exists
+    newTab = allTabs.itemById(tabId)
+
+    if not newTab:
+        # Add a new tab to the workspace:
+        newTab = allTabs.add(tabId, tab_name)
+    return newTab
+
+
+def create_panel(workspace, tab, panel_name):
+    # Get all of the toolbar panels for the NewCam tab:
+    allTabPanels = tab.toolbarPanels
+
+    # Activate the Cam Workspace before activating the newly added Tab
+    workspace.activate()
+
+    panel = None
+    panel = allTabPanels.itemById(panel_name + 'PanelId')
+    if panel is None:
+        # Add setup panel
+        panel = allTabPanels.add(panel_name + 'PanelId', panel_name)
+    return panel
+
+
+def create_button(workspace, tab, panel, button_name, CreatedEventHandler, tooltip=None):
+    # We want this panel to be visible:
+    workspace.activate()
+    panel.isVisible = True
+
+    app = adsk.core.Application.get()
+    ui = app.userInterface
+    cmdDefinitions = ui.commandDefinitions
+
+    # Check if Setup Button exists
+    buttonId = button_name + 'Id'
+    button = cmdDefinitions.itemById(buttonId)
+    if not tooltip:
+        tooltip = button_name
+
+    if not button:
+        # Create a button command definition.
+        button = cmdDefinitions.addButtonDefinition(
+            buttonId, button_name, tooltip)
+
+    # Connect to the command created event.
+    newcommandCreated = CreatedEventHandler()
+    button.commandCreated.add(newcommandCreated)
+    handlers.append(newcommandCreated)
+
+    # Add setup button to ASMBL setup panel
+    buttonControl = panel.controls.addCommand(button)
+    return buttonControl
 
 
 def run(context):
@@ -17,7 +74,6 @@ def run(context):
         app = adsk.core.Application.get()
         ui = app.userInterface
 
-        # For this example, we are adding the already exisiting 'Extrude' command into a new panel:
         cmdDefinitions = ui.commandDefinitions
 
         # Get all workspaces:
@@ -26,77 +82,16 @@ def run(context):
         # Get the CAM workspace:
         camWorkspace = allWorkspaces.itemById('CAMEnvironment')
 
-        # Get all the tabs for the CAM workspace:
-        allCamTabs = camWorkspace.toolbarTabs
+        AsmblTab = create_tab(camWorkspace, 'Asmbl')
+        asmblSetupPanel = create_panel(camWorkspace, AsmblTab, 'Setup')
+        setupControl = create_button(camWorkspace, AsmblTab, asmblSetupPanel,
+                                     'setup', Handlers.SetupCreatedEventHandler)
 
-        # Add a new tab to the CAM workspace:
-        AsmblTab = allCamTabs.add('AsmblTab', 'ASMBL')
-
-        # Get all of the toolbar panels for the NewCam tab:
-        allAsmblTabPanels = AsmblTab.toolbarPanels
-
-        # Activate the Cam Workspace before activating the newly added Tab
-        camWorkspace.activate()
-
-        asmblSetupPanel = None
-        asmblSetupPanel = allAsmblTabPanels.itemById('asmblSetupPanelId')
-        if asmblSetupPanel is None:
-            # Add setup panel
-            asmblSetupPanel = allAsmblTabPanels.add('asmblSetupPanelId', 'ASMBL Setup Panel')
-
-        if asmblSetupPanel:
-            # We want this panel to be visible:
-            asmblSetupPanel.isVisible = True
-
-            # Check if Setup Button exists
-            setupButton = cmdDefinitions.itemById('SetupButtonID')
-
-            if not setupButton:
-                # Create a button command definition.
-                setupButton = cmdDefinitions.addButtonDefinition(
-                    'SetupButtonID', 'Setup Button', 'Create a new ASMBL setup')
-
-            # Connect to the command created event.
-            setupCreated = SetupCreatedEventHandler()
-            setupButton.commandCreated.add(setupCreated)
-            handlers.append(setupCreated)
-
-            # Add setup button to ASMBL setup panel
-            setupControl = asmblSetupPanel.controls.addCommand(setupButton)
         pass
 
     except:
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
-
-
-# Event handler for the commandCreated event.
-class SetupCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
-    def __init__(self):
-        super().__init__()
-
-    def notify(self, args):
-        eventArgs = adsk.core.CommandCreatedEventArgs.cast(args)
-        cmd = eventArgs.command
-
-        # Connect to the execute event.
-        onExecute = SetupExecuteHandler()
-        cmd.execute.add(onExecute)
-        handlers.append(onExecute)
-
-
-# Event handler for the execute event.
-class SetupExecuteHandler(adsk.core.CommandEventHandler):
-    def __init__(self):
-        super().__init__()
-
-    def notify(self, args):
-        eventArgs = adsk.core.CommandEventArgs.cast(args)
-
-        # Code to react to the event.
-        app = adsk.core.Application.get()
-        ui = app.userInterface
-        ui.messageBox('In command execute event handler.')
 
 
 # When the addin stops we need to clean up the ui
