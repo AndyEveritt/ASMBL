@@ -1,6 +1,8 @@
 .vscode
-*tmp.gcode
-*tmp.nc
+
+# 3D files
+*.gcode
+*.nc
 *.stl
 *.dmp
 *.f3d
