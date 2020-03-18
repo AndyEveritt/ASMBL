@@ -7,6 +7,10 @@ import traceback
 handlers = []
 
 
+def create_tab(workspace, tab_name):
+    pass
+
+
 def run(context):
     ui = None
     try:
@@ -44,9 +48,13 @@ def run(context):
             # We want this panel to be visible:
             asmblSetupPanel.isVisible = True
 
-            # Create a button command definition.
-            setupButton = cmdDefinitions.addButtonDefinition(
-                'SetupButtonID', 'Setup Button', 'Create a new ASMBL setup')
+            # Check if Setup Button exists
+            setupButton = cmdDefinitions.itemById('SetupButtonID')
+
+            if not setupButton:
+                # Create a button command definition.
+                setupButton = cmdDefinitions.addButtonDefinition(
+                    'SetupButtonID', 'Setup Button', 'Create a new ASMBL setup')
 
             # Connect to the command created event.
             setupCreated = SetupCreatedEventHandler()
@@ -55,6 +63,7 @@ def run(context):
 
             # Add setup button to ASMBL setup panel
             setupControl = asmblSetupPanel.controls.addCommand(setupButton)
+        pass
 
     except:
         if ui:
