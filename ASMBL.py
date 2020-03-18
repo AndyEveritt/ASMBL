@@ -48,7 +48,7 @@ def create_button(workspace, tab, panel, button_name, CreatedEventHandler, toolt
     cmdDefinitions = ui.commandDefinitions
 
     # Check if Setup Button exists
-    buttonId = button_name + 'Id'
+    buttonId = button_name.replace(' ', '') + 'Id'
     button = cmdDefinitions.itemById(buttonId)
     if not tooltip:
         tooltip = button_name
@@ -71,30 +71,20 @@ def create_button(workspace, tab, panel, button_name, CreatedEventHandler, toolt
     return buttonControl
 
 
-def remove_tab(workspace, tab_name):
+def remove_pannel(tab, panel_name):
     # Get all the tabs for the workspace:
-    allTabs = workspace.toolbarTabs
-    tabId = tab_name + 'TabId'
+    panelId = panel_name + 'PanelId'
 
     # check if tab exists
-    tab = allTabs.itemById(tabId)
+    panel = tab.toolbarPanels.itemById(panelId)
 
-    allTabPanels = tab.toolbarPanels
+    # Remove the controls we added to our panel
+    for control in panel.controls:
+        if control.isValid:
+            control.deleteMe()
 
-    if allTabPanels.count > 0:
-        for panel in allTabPanels:
-
-            # Remove the controls we added to our panel
-            for control in panel.controls:
-                if control.isValid:
-                    control.deleteMe()
-
-            # Remove our panel
-            panel.deleteMe()
-
-    # Remove our render tab from the UI
-    if tab.isValid:
-        tab.deleteMe()
+    # Remove our panel
+    panel.deleteMe()
 
 
 def run(context):
@@ -114,7 +104,12 @@ def run(context):
         AsmblTab = create_tab(camWorkspace, 'Asmbl')
         asmblSetupPanel = create_panel(camWorkspace, AsmblTab, 'Setup')
         setupControl = create_button(camWorkspace, AsmblTab, asmblSetupPanel,
-                                     'setup', Handlers.SetupCreatedEventHandler)
+                                     'New Setup', Handlers.SetupCreatedEventHandler)
+        
+        asmblActionsPanel = create_panel(camWorkspace, AsmblTab, 'Actions')
+        generateControl = create_button(camWorkspace, AsmblTab, asmblActionsPanel,
+                                     'Generate', Handlers.SetupCreatedEventHandler)
+            
 
         pass
 
@@ -135,7 +130,16 @@ def stop(context):
         # Get the CAM workspace:
         camWorkspace = allWorkspaces.itemById('CAMEnvironment')
         
-        remove_tab(camWorkspace, 'Asmbl')
+        allTabs = camWorkspace.toolbarTabs
+
+        # check if tab exists
+        tab = allTabs.itemById('AsmblTabId')
+
+        remove_pannel(tab, 'Setup')
+
+        # Remove our render tab from the UI
+        if tab.isValid:
+            tab.deleteMe()
     except:
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
