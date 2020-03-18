@@ -64,8 +64,37 @@ def create_button(workspace, tab, panel, button_name, CreatedEventHandler, toolt
     handlers.append(newcommandCreated)
 
     # Add setup button to ASMBL setup panel
-    buttonControl = panel.controls.addCommand(button)
+    panelControls = panel.controls
+    buttonControl = panelControls.itemById(buttonId)
+    if not buttonControl:
+        buttonControl = panelControls.addCommand(button)
     return buttonControl
+
+
+def remove_tab(workspace, tab_name):
+    # Get all the tabs for the workspace:
+    allTabs = workspace.toolbarTabs
+    tabId = tab_name + 'TabId'
+
+    # check if tab exists
+    tab = allTabs.itemById(tabId)
+
+    allTabPanels = tab.toolbarPanels
+
+    if allTabPanels.count > 0:
+        for panel in allTabPanels:
+
+            # Remove the controls we added to our panel
+            for control in panel.controls:
+                if control.isValid:
+                    control.deleteMe()
+
+            # Remove our panel
+            panel.deleteMe()
+
+    # Remove our render tab from the UI
+    if tab.isValid:
+        tab.deleteMe()
 
 
 def run(context):
@@ -100,32 +129,13 @@ def stop(context):
     ui = app.userInterface
 
     try:
-        # Get all the toolbar panels
-        allToolbarPanels = ui.allToolbarPanels
+        # Get all workspaces:
+        allWorkspaces = ui.workspaces
 
-        # See if our cam panel still exists
-        asmblSetupPanel = allToolbarPanels.itemById('asmblSetupPanelId')
-        if asmblSetupPanel is not None:
-
-            # Remove the controls we added to our panel
-            for control in asmblSetupPanel.controls:
-                if control.isValid:
-                    control.deleteMe()
-
-            # Remove our panel
-            asmblSetupPanel.deleteMe()
-
-        # Get all of the toolbar tabs
-        allToolbarTabs = ui.allToolbarTabs
-
-        # See if our render tab still exists
-        AsmblTab = allToolbarTabs.itemById('AsmblTab')
-        if asmblSetupPanel is not None:
-
-            # Remove our render tab from the UI
-            if AsmblTab.isValid:
-                AsmblTab.deleteMe()
-
+        # Get the CAM workspace:
+        camWorkspace = allWorkspaces.itemById('CAMEnvironment')
+        
+        remove_tab(camWorkspace, 'Asmbl')
     except:
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
