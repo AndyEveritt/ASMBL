@@ -89,7 +89,7 @@ def postToolpaths(ui, cam):
     units = adsk.cam.PostOutputUnitOptions.DocumentUnitsOutput
 
     # prompt the user with an option to view the resulting NC file.
-    viewResults = ui.messageBox('View results when post is complete?', 'Post NC Files',
+    viewResults = ui.messageBox('View intermediate results when post is complete?', 'Post NC Files',
                                 adsk.core.MessageBoxButtonTypes.YesNoButtonType,
                                 adsk.core.MessageBoxIconTypes.QuestionIconType)
     if viewResults == adsk.core.DialogResults.DialogNo:

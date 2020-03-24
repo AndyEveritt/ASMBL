@@ -98,11 +98,21 @@ class Parser:
                        config['PrintSettings']['layer_height']*config['CamSettings']['layer_intersect']
                        )
 
-        self.last_process_tool = None
+        self.last_additive_tool = None
+        self.last_subtractive_tool = None
 
+        self.main()
+
+    def main(self):
         self.open_files(self.config)
-        self.split_additive_layers(self.gcode_add)
-        self.split_cam_operations(self.gcode_sub)
+
+        self.gcode_add_layers = self.split_additive_layers(self.gcode_add)
+
+        operations = self.split_cam_operations(self.gcode_sub)
+        self.cam_operations = self.order_cam_operations_by_layer(operations)
+
+        self.merged_gcode = self.merge_gcode_layers(self.gcode_add_layers, self.cam_operations)
+        self.create_gcode_script(merged_gcode)
 
     def open_files(self, config):
         gcode_add_file = open(config['InputFiles']['additive_gcode'], 'r')
@@ -136,7 +146,7 @@ class Parser:
 
             gcode_add_layers.append(Simplify3DGcodeLayer(layer))
 
-        self.gcode_add_layers = gcode_add_layers
+        return gcode_add_layers
 
     def split_cam_operations(self, gcode_sub):
         """ Takes fusion360 CAM gcode and splits the operations by execution height """
@@ -170,7 +180,7 @@ class Parser:
             else:
                 operations[i].append(lines)
 
-        self.order_cam_operations_by_layer(operations)
+        return operations
 
     def order_cam_operations_by_layer(self, operations):
         """ Takes a list of cam operations and calculates the layer that they should be executed """
@@ -194,16 +204,12 @@ class Parser:
                 operation.layer_height = operation.height + \
                     self.config['PrintSettings']['layer_height'] * self.config['CamSettings']['layer_dropdown']
 
-        self.cam_operations = ordered_operations
-        self.merged_gcode = self.merge_gcode_layers(
-            self.gcode_add_layers, self.cam_operations)
+        return ordered_operations
 
     def merge_gcode_layers(self, gcode_add, cam_operations):
         """ Takes the individual CAM instructions and merges them into the additive file from Simplify3D """
         merged_gcode = gcode_add + cam_operations
         merged_gcode.sort(key=lambda x: x.layer_height)
-
-        self.create_gcode_script(merged_gcode)
 
         return merged_gcode
 
@@ -220,16 +226,21 @@ class Parser:
         if isinstance(layer, Simplify3DGcodeLayer):
             process_list = layer.gcode.split('\nT')
             if len(process_list) > 1:
-                self.last_process_tool = 'T' + process_list[-1].split('\n')[0]
+                self.last_additive_tool = 'T' + process_list[-1].split('\n')[0]
+
+        elif isinstance(layer, CamGcodeLayer):
+            process_list = layer.gcode.split('\nT')
+            if len(process_list) > 1:
+                self.last_subtractive_tool = 'T' + process_list[-1].split('\n')[0]
 
     def tool_change(self, layer, prev_layer):
         if type(layer) != type(prev_layer):
             if type(layer) == Simplify3DGcodeLayer:
                 first_gcode = layer.gcode.split('\n')[1]
                 if first_gcode[0] is not 'T':
-                    self.merged_gcode_script += self.last_process_tool + '\n'
+                    self.merged_gcode_script += self.last_additive_tool + '\n'
             elif type(layer == CamGcodeLayer):
-                self.merged_gcode_script += self.config['Printer']['cam_tool'] + '\n'
+                self.merged_gcode_script += self.last_subtractive_tool + '\n'
 
     def create_output_file(self, gcode):
         """ Saves the file to the output folder """
