@@ -101,7 +101,7 @@ def run(context):
         AsmblTab = create_tab(camWorkspace, 'Asmbl')
         asmblSetupPanel = create_panel(camWorkspace, AsmblTab, 'Setup')
         setupControl = create_button(camWorkspace, AsmblTab, asmblSetupPanel,
-                                     'New Setup', Handlers.MyCommandCreatedHandler)
+                                     'New Setup', Handlers.SetupCreatedEventHandler)
         
         asmblActionsPanel = create_panel(camWorkspace, AsmblTab, 'Actions')
         generateControl = create_button(camWorkspace, AsmblTab, asmblActionsPanel,
