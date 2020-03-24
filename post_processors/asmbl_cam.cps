@@ -56,7 +56,7 @@ var mFormat = createFormat({prefix:"M", decimals:0});
 
 var xyzFormat = createFormat({decimals:(unit == MM ? 3 : 4), trim:false});
 var feedFormat = createFormat({decimals:(unit == MM ? 1 : 2)});
-// var toolFormat = createFormat({decimals:0});
+var toolFormat = createFormat({decimals:0});
 // var rpmFormat = createFormat({decimals:0});
 var secFormat = createFormat({decimals:3, forceDecimal:true}); // seconds - range 0.001-1000
 // var taperFormat = createFormat({decimals:1, scale:DEG});
@@ -173,10 +173,11 @@ function forceAny() {
 }
 
 function onSection() {
-  
   var retracted = false; // specifies that the tool has been retracted to the safe plane
-
+  
   writeln("");
+
+  writeBlock("T" + toolFormat.format(tool.number));
   
   if (hasParameter("operation-comment")) {
     var comment = getParameter("operation-comment");
