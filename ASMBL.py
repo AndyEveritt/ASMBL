@@ -3,10 +3,7 @@ import adsk.fusion
 import traceback
 
 from .fusion_api import Handlers
-
-# Global list to keep all event handlers in scope.
-# This is only needed with Python.
-handlers = []
+from .fusion_api.Handlers import handlers
 
 
 def create_tab(workspace, tab_name):
@@ -104,7 +101,7 @@ def run(context):
         AsmblTab = create_tab(camWorkspace, 'Asmbl')
         asmblSetupPanel = create_panel(camWorkspace, AsmblTab, 'Setup')
         setupControl = create_button(camWorkspace, AsmblTab, asmblSetupPanel,
-                                     'New Setup', Handlers.SetupCreatedEventHandler)
+                                     'New Setup', Handlers.MyCommandCreatedHandler)
         
         asmblActionsPanel = create_panel(camWorkspace, AsmblTab, 'Actions')
         generateControl = create_button(camWorkspace, AsmblTab, asmblActionsPanel,
