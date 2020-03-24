@@ -2,19 +2,15 @@ import adsk.core
 import adsk.fusion
 import traceback
 import time
+import os
 
 # Global list to keep all event handlers in scope.
 # This is only needed with Python.
 handlers = []
 
 
-def generateAllTootpaths(app, ui):
-    # Get the CAM product.
-    doc = app.activeDocument
-    products = doc.products
-    product = products.itemByProductType('CAMProductType')
-    cam = adsk.cam.CAM.cast(product)
-
+def generateAllTootpaths(ui, cam):
+    # Check CAM data exists.
     if not cam:
         ui.messageBox('No CAM data exists in the active document.')
         return
@@ -67,10 +63,77 @@ def generateAllTootpaths(app, ui):
     progress.hide()
     ui.messageBox(message)
 
+
+def postToolpaths(ui, cam):
+    # Check CAM data exists.
+    if not cam:
+        ui.messageBox('No CAM data exists in the active document.')
+        return
+
+    # Verify that there are any setups.
+    if cam.allOperations.count == 0:
+        ui.messageBox('No CAM operations exist in the active document.')
+        return
+    
+    setupsCount = cam.setups.count
+    if setupsCount < 2:
+        ui.messageBox('Only 1 setup, requires an additive & milling setup to work')
+        return
+    if setupsCount > 2:
+        ui.messageBox('Too many setups, requires an additive & milling setup to work')
+        return
+    
+    outputFolder = cam.temporaryFolder
+
+    # specify the NC file output units
+    units = adsk.cam.PostOutputUnitOptions.DocumentUnitsOutput
+
+    # prompt the user with an option to view the resulting NC file.
+    viewResults = ui.messageBox('View results when post is complete?', 'Post NC Files',
+                                adsk.core.MessageBoxButtonTypes.YesNoButtonType,
+                                adsk.core.MessageBoxIconTypes.QuestionIconType)
+    if viewResults == adsk.core.DialogResults.DialogNo:
+        viewResult = False
+    else:
+        viewResult = True
+
+    for i in range(setupsCount):
+        setup = cam.setups.item(i)
+        setupOperationType = None
+        try:
+            setupOperationType = setup.operationType
+        except:
+            pass # there is a bug in Fusion as of writing that means Additive setups don't have an operation type
+
+        if setupOperationType == adsk.cam.OperationTypes.MillingOperation:
+            programName = 'tmpSubtractive'
+            postConfig = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'post_processors', 'asmbl_cam.cps')
+
+            # create the postInput object
+            postInput = adsk.cam.PostProcessInput.create(programName, postConfig, outputFolder, units)
+            postInput.isOpenInEditor = viewResult
+
+            cam.postProcess(setup, postInput)
+        
+        elif setupOperationType == None:
+            programName = 'tmpAdditive'
+            postConfig = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'post_processors', 'asmbl_fff.cps')
+
+            # create the postInput object
+            postInput = adsk.cam.PostProcessInput.create(programName, postConfig, outputFolder, units)
+            postInput.isOpenInEditor = viewResult
+
+            cam.postProcess(setup, postInput)
+        
+    # open the output folder in Finder on Mac or in Explorer on Windows
+    if (os.name == 'posix'):
+        os.system('open "%s"' % outputFolder)
+    elif (os.name == 'nt'):
+        os.startfile(outputFolder)
+
+
 # Event handler that reacts when the command definitio is executed which
 # results in the command being created and this event being fired.
-
-
 class SetupCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
     def __init__(self):
         super().__init__()
@@ -155,8 +218,15 @@ class SetupExecuteHandler(adsk.core.CommandEventHandler):
         layerDropdown = inputs.itemById('layerDropdown').value
         layerIntersect = inputs.itemById('layerIntersect').value
 
+        doc = app.activeDocument
+        products = doc.products
+        product = products.itemByProductType('CAMProductType')
+        cam = adsk.cam.CAM.cast(product)
+
         if generateToolpaths:
-            generateAllTootpaths(app, ui)
+            generateAllTootpaths(ui, cam)
+        
+        postToolpaths(ui, cam)
 
         config = {
             "InputFiles": {
