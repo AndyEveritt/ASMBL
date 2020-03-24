@@ -10,14 +10,12 @@
   FORKID {B36C05D8-D948-4BC2-9620-A9FDE5D36CB3}
 */
 
-description = "BoXZY (Grbl)";
-vendor = "BoXZY";
-vendorUrl = "http://www.boxzy.com";
-legal = "Copyright (C) 2012-2017 by Autodesk, Inc.";
+description = "ASMBL CAM";
+vendor = "ASMBL";
 certificationLevel = 2;
 minimumRevision = 24000;
 
-longDescription = "Generic milling post for BoXZY.";
+longDescription = "Generic milling post ASMBL.";
 
 extension = "nc";
 setCodePage("ascii");

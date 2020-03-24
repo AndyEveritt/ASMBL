@@ -10,14 +10,12 @@
   FORKID {A316FBC4-FA6E-41C5-A347-3D94F72F5D06}
 */
 
-description = "Generic FFF Machine";
-vendor = "Autodesk";
-vendorUrl = "http://www.autodesk.com";
-legal = "Copyright (C) 2012-2020 by Autodesk, Inc.";
+description = "ASMBL FFF";
+vendor = "ASMBL";
 certificationLevel = 2;
 minimumRevision = 45633;
 
-longDescription = "Simple post to export toolpath for generic FFF Machine in gcode format";
+longDescription = "Simple post to export toolpath for generic FFF Machine in gcode format for ASMBL";
 
 extension = "gcode";
 setCodePage("ascii");
