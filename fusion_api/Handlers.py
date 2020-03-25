@@ -180,21 +180,30 @@ class SetupCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
             # Create bool value input to check whether you should generate toolpaths.
             tabSettingsChildInputs.addBoolValueInput('generateToolpaths', 'Generate Toolpaths', True, '', False)
 
-            groupPrintCmdInput = tabSettingsChildInputs.addGroupCommandInput('print', 'Print Settings')
-            groupPrintCmdInput.isExpanded = True
-            groupPrintChildInputs = groupPrintCmdInput.children
-
-            # Create print inputs
-            groupPrintChildInputs.addFloatSpinnerCommandInput(
-                'layerHeight', 'Layer Height', 'mm', 0.000001, 10000, 0.1, 0.2)
+            # groupPrintCmdInput = tabSettingsChildInputs.addGroupCommandInput('print', 'Print Settings')
+            # groupPrintCmdInput.isExpanded = True
+            # groupPrintChildInputs = groupPrintCmdInput.children
 
             groupCamCmdInput = tabSettingsChildInputs.addGroupCommandInput('cam', 'CAM Settings')
             groupCamCmdInput.isExpanded = True
             groupCamChildInputs = groupCamCmdInput.children
 
             # Create CAM inputs
-            groupCamChildInputs.addIntegerSpinnerCommandInput('layerDropdown', 'Layer Dropdown', 0, 10000, 1, 1)
-            groupCamChildInputs.addFloatSpinnerCommandInput('layerIntersect', 'Layer Intersect', 'mm', 0, 1, 0.1, 0.5)
+            layerDropdownInput = groupCamChildInputs.addIntegerSpinnerCommandInput('layerDropdown', 'Layer Dropdown', 0, 10000, 1, 1)
+            layerDropdownInput.tooltip = 'Controls how many layers the cutting tip should overlap previously cut layers'
+            layerDropdownInput.tooltipDescription = '\
+                <br>A higher value generally makes for a better finish as it uses the side of the cutter instead of the tip, \
+                however this is not always possible depending on the geometry.</br>\
+                <br>Limited by cutter length</br>\
+                <br>This does not alter the toolpath, only when it happens</br>'
+            layerDropdownInput.toolClipFilename = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'resources', 'GenerateAsmbl', 'tooltip_dropdown.png')
+
+            layerIntersectInput = groupCamChildInputs.addFloatSpinnerCommandInput('layerIntersect', 'Layer Intersect', 'mm', 0, 1, 0.1, 0)
+            layerIntersectInput.tooltip = 'Controls how much the cutting tip should be lowered on a global level'
+            layerIntersectInput.tooltipDescription = '\
+                <br>Set this to 0 mm for accurate parts. Setting it equal to half a layer height can create smoother cut surfaces</br>\
+                <br>This shifts the entire subtractive toolpath by this amount</br>'
+            layerIntersectInput.toolClipFilename = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'resources', 'GenerateAsmbl', 'tooltip_intersect.png')
 
         except:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
@@ -216,7 +225,6 @@ class SetupExecuteHandler(adsk.core.CommandEventHandler):
         inputs = eventArgs.command.commandInputs
 
         generateToolpaths = inputs.itemById('generateToolpaths').value
-        layerHeight = inputs.itemById('layerHeight').value
         layerDropdown = inputs.itemById('layerDropdown').value
         layerIntersect = inputs.itemById('layerIntersect').value
 
@@ -226,9 +234,17 @@ class SetupExecuteHandler(adsk.core.CommandEventHandler):
         cam = adsk.cam.CAM.cast(product)
 
         if generateToolpaths:
-            generateAllTootpaths(ui, cam)
+            try:
+                generateAllTootpaths(ui, cam)
+            except:
+                ui.messageBox('Failed generating toolpaths:\n{}'.format(traceback.format_exc()))
+                return
         
-        postToolpaths(ui, cam)
+        try:
+            postToolpaths(ui, cam)
+        except:
+            ui.messageBox('Failed posting toolpaths:\n{}'.format(traceback.format_exc()))
+            return
 
         outputFolder = cam.temporaryFolder
         tmpAdditive = os.path.join(outputFolder, 'tmpAdditive.gcode')
@@ -244,8 +260,7 @@ class SetupExecuteHandler(adsk.core.CommandEventHandler):
                 "bed_centre_y": 0
             },
             "PrintSettings": {
-                "raft_height": 0,   # alignment is done in Fusion
-                "layer_height": layerHeight
+                "raft_height": 0   # alignment is done in Fusion
             },
             "CamSettings": {
                 "layer_dropdown": layerDropdown,
@@ -257,6 +272,9 @@ class SetupExecuteHandler(adsk.core.CommandEventHandler):
         }
         ui.messageBox(config.__str__())
 
-        asmbl_parser = Parser(config)
-        asmbl_parser.create_output_file(asmbl_parser.merged_gcode_script)
-
+        try:
+            asmbl_parser = Parser(config)
+            asmbl_parser.create_output_file(asmbl_parser.merged_gcode_script)
+        except:
+            ui.messageBox('Failed combing gcode files:\n{}'.format(traceback.format_exc()))
+            return

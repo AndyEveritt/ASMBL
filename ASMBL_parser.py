@@ -1,3 +1,9 @@
+import sys
+import os
+venv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'env', 'Lib', 'site-packages')
+if venv_path not in sys.path:
+    sys.path.append(venv_path)  # add venv to python path
+
 from scipy.signal import find_peaks
 from math import (
     inf,
@@ -5,11 +11,6 @@ from math import (
 )
 import numpy as np
 import re
-import sys
-import os
-venv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'env', 'Lib', 'site-packages')
-if venv_path not in sys.path:
-    sys.path.append(venv_path)  # add venv to python path
 
 
 class Simplify3DGcodeLayer:
@@ -107,8 +108,7 @@ class Parser:
         self.offset = (config['Printer']['bed_centre_x'],
                        config['Printer']['bed_centre_y'],
 
-                       config['PrintSettings']['raft_height'] -
-                       config['PrintSettings']['layer_height']*config['CamSettings']['layer_intersect']
+                       config['PrintSettings']['raft_height'] - config['CamSettings']['layer_intersect']
                        )
 
         self.last_additive_tool = None
