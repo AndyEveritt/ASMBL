@@ -1,15 +1,14 @@
 {
     "InputFiles": {
-        "additive_gcode": "gcode/Spinner_Demo/Spinner_Demo_MM.gcode",
-        "subtractive_gcode": "gcode/Spinner_Demo/Spinner_Demo.nc"
+        "additive_gcode": "gcode/tmpAdditive.gcode",
+        "subtractive_gcode": "gcode/tmpSubtractive.nc"
     },
     "Printer": {
-        "bed_centre_x": 150,
-        "bed_centre_y": 100,
-        "cam_tool": "T3"
+        "bed_centre_x": 0,
+        "bed_centre_y": 0
     },
     "PrintSettings": {
-        "raft_height": 2.333,
+        "raft_height": 0,
         "layer_height": 0.3
     },
     "CamSettings": {

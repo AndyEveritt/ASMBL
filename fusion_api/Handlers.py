@@ -250,7 +250,4 @@ class SetupExecuteHandler(adsk.core.CommandEventHandler):
             }
         }
 
-        # Code to react to the event.
-        app = adsk.core.Application.get()
-        ui = app.userInterface
-        ui.messageBox('In command execute event handler.')
+        # ui.messageBox('In command execute event handler.')

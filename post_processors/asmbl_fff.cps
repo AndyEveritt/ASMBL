@@ -154,6 +154,9 @@ function onSection() {
   writeBlock(gAbsIncModal.format(90)); // absolute spatial co-ordinates
   writeBlock(mFormat.format(82)); // absolute extrusion co-ordinates
 
+  // set initial tool
+  onExtruderChange(activeExtruder)
+
   //homing
   writeRetract(Z); // retract in Z
 
@@ -212,7 +215,7 @@ function onExtrusionReset(length) {
 }
 
 function onLayer(num) {
-  writeComment("Layer : " + integerFormat.format(num) + " of " + integerFormat.format(layerCount));
+  writeComment("layer, " + integerFormat.format(num) + " of " + integerFormat.format(layerCount));  // comment format to match Simplify3D
 }
 
 function onExtruderTemp(temp, wait, id) {
@@ -256,7 +259,7 @@ function setFeedRate(value) {
 }
 
 function writeComment(text) {
-  writeln(";" + text);
+  writeln("; " + text);
 }
 
 /** Output block to do safe retract and/or move to home position. */

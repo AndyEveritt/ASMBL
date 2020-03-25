@@ -104,57 +104,7 @@ function writeComment(text) {
 }
 
 function onOpen() {
-  if (!properties.separateWordsWithSpace) {
-    setWordSeparator("");
-  }
 
-  sequenceNumber = properties.sequenceNumberStart;
-
-  if (programName) {
-    writeComment(programName);
-  }
-  if (programComment) {
-    writeComment(programComment);
-  }
-
-  // dump machine configuration
-  var vendor = machineConfiguration.getVendor();
-  var model = machineConfiguration.getModel();
-  var description = machineConfiguration.getDescription();
-
-  if (properties.writeMachine && (vendor || model || description)) {
-    writeComment(localize("Machine"));
-    if (vendor) {
-      writeComment("  " + localize("vendor") + ": " + vendor);
-    }
-    if (model) {
-      writeComment("  " + localize("model") + ": " + model);
-    }
-    if (description) {
-      writeComment("  " + localize("description") + ": "  + description);
-    }
-  }
-
-  switch (unit) {
-  case IN:
-    error(localize("Please select millimeters as unit when post processing. Inch mode is not recommended by the BoXZY team."));
-    return;
-    // writeBlock(gUnitModal.format(20));
-    // break;
-  case MM:
-    writeBlock(gUnitModal.format(21));
-    break;
-  }
-
-  // absolute coordinates
-  writeBlock(gAbsIncModal.format(90));
-
-  writeBlock(gFormat.format(92), xOutput.format(0), yOutput.format(0), zOutput.format(0));
-  forceXYZ();
-}
-
-function onComment(message) {
-  writeComment(message);
 }
 
 /** Force output of X, Y, and Z. */
@@ -173,9 +123,10 @@ function forceAny() {
 function onSection() {
   var retracted = false; // specifies that the tool has been retracted to the safe plane
   
-  writeln("");
+  if (!isFirstSection()){
+    writeln("");
+  }
 
-  writeBlock("T" + toolFormat.format(tool.number));
   
   if (hasParameter("operation-comment")) {
     var comment = getParameter("operation-comment");
@@ -183,8 +134,8 @@ function onSection() {
       writeComment(comment);
     }
   }
-
-  // tool change not supported
+  
+  writeBlock("T" + toolFormat.format(tool.number));
 
   forceXYZ();
 
@@ -212,7 +163,6 @@ function onSection() {
     gMotionModal.reset();
 
     writeBlock(
-      gAbsIncModal.format(90),
       gMotionModal.format(0),
       xOutput.format(initialPosition.x),
       yOutput.format(initialPosition.y),

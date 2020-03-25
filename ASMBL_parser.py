@@ -28,15 +28,21 @@ class Simplify3DGcodeLayer:
         return gcode.split(',')[0][2:]
 
     def get_layer_height(self, gcode):
-        return float(gcode.split('\n')[0].split('Z = ')[-1])
+        height = None
+        try:
+            height = float(gcode.split('\n')[0].split('Z = ')[-1])  # Simplify3D layer height
+        except ValueError:
+            # Fusion 360 layer height #TODO (THIS IS NOT ROBUST...IT NEEDS CHANGING)
+            height = float(gcode.split('Z')[1].split('\n')[0])
+
+        return height
 
 
 class CamGcodeLine:
     """ Stores a single line of fusion360 CAM gcode. """
 
-    def __init__(self, gcode, offset, name=None):
+    def __init__(self, gcode, offset):
         self.gcode = self.offset_gcode(gcode, offset)
-        self.name = name
         self.layer_height = self.get_layer_height(self.gcode)
 
     def offset_gcode(self, gcode, offset):
@@ -70,10 +76,15 @@ class CamGcodeLine:
 class CamGcodeLayer:
     """ Stores all the CAM operations in a specific layer. """
 
-    def __init__(self, height, operations):
+    def __init__(self, operations, name=None, tool=None, height=None):
         self.height = height
         self.operations = operations
-        self.gcode = self.parse_gcode(self.operations)
+        self.name = name
+        self.tool = tool
+
+        if self.operations:
+            self.gcode = self.parse_gcode(self.operations)
+
         self.layer_height = None  # height to print to before running the operation
 
     def parse_gcode(self, operations):
@@ -112,7 +123,7 @@ class Parser:
         self.cam_operations = self.order_cam_operations_by_layer(operations)
 
         self.merged_gcode = self.merge_gcode_layers(self.gcode_add_layers, self.cam_operations)
-        self.create_gcode_script(merged_gcode)
+        self.create_gcode_script(self.merged_gcode)
 
     def open_files(self, config):
         gcode_add_file = open(config['InputFiles']['additive_gcode'], 'r')
@@ -127,16 +138,14 @@ class Parser:
 
         gcode_add_layers = []
         gcode_add_layers.append(Simplify3DGcodeLayer(
-            tmp_list[0],
+            tmp_list.pop(0),
             name="initialise",
             layer_height=0,
         ))    # slicer settings & initialise
 
         for i in range(ceil(len(tmp_list)/2)):
-            if i == 0:
-                continue
 
-            layer = tmp_list[2*i-1] + tmp_list[2*i]
+            layer = tmp_list[2*i] + tmp_list[2*i+1]
             name = layer.split(',')[0][2:]
 
             if 2*i == len(tmp_list) - 1:
@@ -152,48 +161,50 @@ class Parser:
         """ Takes fusion360 CAM gcode and splits the operations by execution height """
         tmp_operation_list = gcode_sub.split('\n\n')
 
-        operations = [None]
+        operations = []
 
         for i, operation in enumerate(tmp_operation_list):
-            if i == 0:  # ignore setup gcode
-                continue
 
             lines = operation.split('\n')
             name = lines.pop(0)
+            tool = lines.pop(0)
             lines = [line for line in lines if line != '']
 
             operations.append([])
 
             # extract information from string
-            lines = [CamGcodeLine(line, self.offset, name) for line in lines]
+            lines = [CamGcodeLine(line, self.offset) for line in lines]
 
             line_heights = np.array([line.layer_height for line in lines])
             local_peaks = find_peaks(line_heights)[0]
 
             if len(local_peaks) > 0:
-                operations[i].append(lines[0: local_peaks[0]+1])
+                op_lines = lines[0: local_peaks[0]+1]
+                operations[i].append(CamGcodeLayer(op_lines, name, tool))
 
                 for index, peak in enumerate(local_peaks[:-1]):
-                    operations[i].append(lines[local_peaks[index]: local_peaks[index+1]+1])
+                    op_lines = lines[local_peaks[index]: local_peaks[index+1]+1]
+                    operations[i].append(CamGcodeLayer(op_lines, name, tool))
 
-                operations[i].append(lines[local_peaks[-1]:])
+                op_lines = lines[local_peaks[-1]:]
+                operations[i].append(CamGcodeLayer(op_lines, name, tool))
             else:
-                operations[i].append(lines)
+                operations[i].append(CamGcodeLayer(lines, name, tool))
 
         return operations
 
     def order_cam_operations_by_layer(self, operations):
         """ Takes a list of cam operations and calculates the layer that they should be executed """
-        ordered_operations = []
+        unordered_ops = []
         for operation in operations:
             if operation:
                 for op_instance in operation:
                     op_height = min(
-                        [height.layer_height for height in op_instance])
-                    ordered_operations.append(
-                        CamGcodeLayer(op_height, op_instance))
+                        [line.layer_height for line in op_instance.operations])
+                    op_instance.height = op_height
+                    unordered_ops.append(op_instance)
 
-        ordered_operations.sort(key=lambda x: x.height)
+        ordered_operations = sorted(unordered_ops, key=lambda x: x.height)
         for i, operation in enumerate(ordered_operations):
             later_ops = [
                 op for op in ordered_operations if op.height > operation.height]
@@ -217,30 +228,24 @@ class Parser:
         self.merged_gcode_script = ''
         prev_layer = gcode[0]
         for layer in gcode:
-            self.set_last_process_tool(prev_layer)
+            self.set_last_additive_tool(prev_layer)
             self.tool_change(layer, prev_layer)
             prev_layer = layer
             self.merged_gcode_script += layer.gcode
 
-    def set_last_process_tool(self, layer):
+    def set_last_additive_tool(self, layer):
         if isinstance(layer, Simplify3DGcodeLayer):
             process_list = layer.gcode.split('\nT')
             if len(process_list) > 1:
                 self.last_additive_tool = 'T' + process_list[-1].split('\n')[0]
 
-        elif isinstance(layer, CamGcodeLayer):
-            process_list = layer.gcode.split('\nT')
-            if len(process_list) > 1:
-                self.last_subtractive_tool = 'T' + process_list[-1].split('\n')[0]
-
     def tool_change(self, layer, prev_layer):
-        if type(layer) != type(prev_layer):
-            if type(layer) == Simplify3DGcodeLayer:
-                first_gcode = layer.gcode.split('\n')[1]
-                if first_gcode[0] is not 'T':
-                    self.merged_gcode_script += self.last_additive_tool + '\n'
-            elif type(layer == CamGcodeLayer):
-                self.merged_gcode_script += self.last_subtractive_tool + '\n'
+        if type(layer) == Simplify3DGcodeLayer:
+            first_gcode = layer.gcode.split('\n')[1]
+            if first_gcode[0] is not 'T':
+                self.merged_gcode_script += self.last_additive_tool + '\n'
+        elif type(layer) == CamGcodeLayer:
+            self.merged_gcode_script += layer.tool + '\n'
 
     def create_output_file(self, gcode):
         """ Saves the file to the output folder """
