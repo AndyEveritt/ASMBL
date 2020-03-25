@@ -1,17 +1,15 @@
+from scipy.signal import find_peaks
+from math import (
+    inf,
+    ceil,
+)
+import numpy as np
+import re
 import sys
 import os
 venv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'env', 'Lib', 'site-packages')
 if venv_path not in sys.path:
     sys.path.append(venv_path)  # add venv to python path
-
-import re
-import numpy as np
-
-from math import (
-    inf,
-    ceil,
-)
-from scipy.signal import find_peaks
 
 
 class Simplify3DGcodeLayer:
@@ -209,15 +207,39 @@ class Parser:
                     unordered_ops.append(op_instance)
 
         ordered_operations = sorted(unordered_ops, key=lambda x: x.height)
+        layer_dropdown = self.config['CamSettings']['layer_dropdown']
+
         for i, operation in enumerate(ordered_operations):
-            later_ops = [
-                op for op in ordered_operations if op.height > operation.height]
-            try:
-                operation.layer_height = min(
-                    [op.height for op in later_ops]) + self.config['PrintSettings']['layer_height'] * self.config['CamSettings']['layer_dropdown']
-            except ValueError:
-                operation.layer_height = operation.height + \
-                    self.config['PrintSettings']['layer_height'] * self.config['CamSettings']['layer_dropdown']
+            later_ops = [op for op in ordered_operations if op.height > operation.height]
+            if len(later_ops) > 0:
+                next_op_height = min([op.height for op in later_ops])
+                later_additive = [layer for layer in self.gcode_add_layers if layer.layer_height > next_op_height]
+
+                if layer_dropdown == 0:
+                    operation.layer_height = next_op_height
+
+                elif len(later_additive) == 0:
+                    operation.layer_height = next_op_height
+
+                elif len(later_additive) >= layer_dropdown:
+                    operation.layer_height = later_additive[layer_dropdown - 1].layer_height
+
+                else:
+                    operation.layer_height = later_additive[-1].layer_height
+
+            else:  # no later ops
+                later_additive = [layer for layer in self.gcode_add_layers if layer.layer_height > operation.height]
+
+                if len(later_additive) >= layer_dropdown:
+                    operation.layer_height = later_additive[layer_dropdown - 1].layer_height
+                
+                elif len(later_additive) == 0:   # no further printing
+                    # add 10 since it is unlikely that the printed layer height will exceed 10 mm
+                    # but still want to place cutting after a print at the same height
+                    operation.layer_height = operation.height + 10
+                
+                else:
+                    operation.layer_height = later_additive[-1].layer_height
 
         return ordered_operations
 

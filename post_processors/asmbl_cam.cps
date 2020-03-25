@@ -17,7 +17,7 @@ minimumRevision = 24000;
 
 longDescription = "Generic milling post ASMBL.";
 
-extension = "nc";
+extension = "gcode";
 setCodePage("ascii");
 
 capabilities = CAPABILITY_MILLING;
