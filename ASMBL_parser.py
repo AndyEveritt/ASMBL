@@ -305,6 +305,10 @@ class Parser:
 
         with open(file_path, "w") as f:
             f.write(gcode)
+        
+        f.close()
+
+        os.startfile(file_path)
 
 
 if __name__ == "__main__":
