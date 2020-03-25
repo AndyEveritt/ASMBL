@@ -4,6 +4,8 @@ import traceback
 import time
 import os
 
+from ..ASMBL_parser import Parser
+
 # Global list to keep all event handlers in scope.
 # This is only needed with Python.
 handlers = []
@@ -228,10 +230,14 @@ class SetupExecuteHandler(adsk.core.CommandEventHandler):
         
         postToolpaths(ui, cam)
 
+        outputFolder = cam.temporaryFolder
+        tmpAdditive = os.path.join(outputFolder, 'tmpAdditive.gcode')
+        tmpSubtractive = os.path.join(outputFolder, 'tmpSubtractive.nc')
+
         config = {
             "InputFiles": {
-                "additive_gcode": "gcode/box/box.gcode",
-                "subtractive_gcode": "gcode/box/tmp.nc"
+                "additive_gcode": tmpAdditive,
+                "subtractive_gcode": tmpSubtractive
             },
             "Printer": {
                 "bed_centre_x": 0,  # alignment is done in Fusion so does not matter here (set to 0)
@@ -249,5 +255,8 @@ class SetupExecuteHandler(adsk.core.CommandEventHandler):
                 "filename": "tmp"
             }
         }
+        ui.messageBox(config.__str__())
 
-        # ui.messageBox('In command execute event handler.')
+        asmbl_parser = Parser(config)
+        asmbl_parser.create_output_file(asmbl_parser.merged_gcode_script)
+

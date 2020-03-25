@@ -1,13 +1,17 @@
+import sys
+import os
+venv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'env', 'Lib', 'site-packages')
+if venv_path not in sys.path:
+    sys.path.append(venv_path)  # add venv to python path
+
+import re
+import numpy as np
+
 from math import (
     inf,
     ceil,
 )
-
 from scipy.signal import find_peaks
-
-import re
-import os
-import numpy as np
 
 
 class Simplify3DGcodeLayer:
