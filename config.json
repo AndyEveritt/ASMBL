@@ -11,8 +11,8 @@
         "raft_height": 0
     },
     "CamSettings": {
-        "layer_dropdown": 2,
-        "layer_intersect": 0
+        "layer_overlap": 2,
+        "layer_dropdown": 0
     },
     "OutputSettings": {
         "filename": "tmp"

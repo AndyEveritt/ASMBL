@@ -184,8 +184,8 @@ Update the `config.json` so that the following settings are correct for your pro
         "layer_height": "layer height of printed part"
     },
     "CamSettings": {
-        "layer_dropdown": "How many layers the tip of the cutter should be lower than the layers being cut",
-        "layer_intersect": "What percentage (0-1) of a layer line should the tip of the cutter sit at when cutting"
+        "layer_overlap": "How many layers the tip of the cutter should be lower than the layers being cut",
+        "layer_dropdown": "What number of mm the tip of the cutter should be lowered by"
     },
     "OutputSettings": {
         "filename": "Name of the output file containing the merged gcode script

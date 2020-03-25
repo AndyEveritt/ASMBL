@@ -103,12 +103,13 @@ class CamGcodeLayer:
 class Parser:
     """ Main parsing class. """
 
-    def __init__(self, config):
+    def __init__(self, config, progress=None):
         self.config = config
+        self.progress = progress    # progress bar for Fusion add-in
         self.offset = (config['Printer']['bed_centre_x'],
                        config['Printer']['bed_centre_y'],
 
-                       config['PrintSettings']['raft_height'] - config['CamSettings']['layer_intersect']
+                       config['PrintSettings']['raft_height'] - config['CamSettings']['layer_dropdown']
                        )
 
         self.last_additive_tool = None
@@ -117,14 +118,36 @@ class Parser:
         self.main()
 
     def main(self):
+        progress = self.progress
+
+        if progress:
+            progress.message = 'Opening files'
+            progress.progressValue += 1
         self.open_files(self.config)
 
+        if progress:
+            progress.message = 'Spliting additive gcode layers'
+            progress.progressValue += 1
         self.gcode_add_layers = self.split_additive_layers(self.gcode_add)
 
+        if progress:
+            progress.message = 'Spliting subtractive gcode layers'
+            progress.progressValue += 1
         operations = self.split_cam_operations(self.gcode_sub)
+
+        if progress:
+            progress.message = 'Ordering subtractive gcode layers'
+            progress.progressValue += 1
         self.cam_operations = self.order_cam_operations_by_layer(operations)
 
+        if progress:
+            progress.message = 'Merging gcode layers'
+            progress.progressValue += 1
         self.merged_gcode = self.merge_gcode_layers(self.gcode_add_layers, self.cam_operations)
+
+        if progress:
+            progress.message = 'Creating gcode script'
+            progress.progressValue += 1
         self.create_gcode_script(self.merged_gcode)
 
     def open_files(self, config):
@@ -207,7 +230,7 @@ class Parser:
                     unordered_ops.append(op_instance)
 
         ordered_operations = sorted(unordered_ops, key=lambda x: x.height)
-        layer_dropdown = self.config['CamSettings']['layer_dropdown']
+        layer_overlap = self.config['CamSettings']['layer_overlap']
 
         for i, operation in enumerate(ordered_operations):
             later_ops = [op for op in ordered_operations if op.height > operation.height]
@@ -215,14 +238,14 @@ class Parser:
                 next_op_height = min([op.height for op in later_ops])
                 later_additive = [layer for layer in self.gcode_add_layers if layer.layer_height > next_op_height]
 
-                if layer_dropdown == 0:
+                if layer_overlap == 0:
                     operation.layer_height = next_op_height
 
                 elif len(later_additive) == 0:
                     operation.layer_height = next_op_height
 
-                elif len(later_additive) >= layer_dropdown:
-                    operation.layer_height = later_additive[layer_dropdown - 1].layer_height
+                elif len(later_additive) >= layer_overlap:
+                    operation.layer_height = later_additive[layer_overlap - 1].layer_height
 
                 else:
                     operation.layer_height = later_additive[-1].layer_height
@@ -230,8 +253,8 @@ class Parser:
             else:  # no later ops
                 later_additive = [layer for layer in self.gcode_add_layers if layer.layer_height > operation.height]
 
-                if len(later_additive) >= layer_dropdown:
-                    operation.layer_height = later_additive[layer_dropdown - 1].layer_height
+                if len(later_additive) >= layer_overlap:
+                    operation.layer_height = later_additive[layer_overlap - 1].layer_height
                 
                 elif len(later_additive) == 0:   # no further printing
                     # add 10 since it is unlikely that the printed layer height will exceed 10 mm
@@ -273,10 +296,11 @@ class Parser:
         elif type(layer) == CamGcodeLayer:
             self.merged_gcode_script += layer.tool + '\n'
 
-    def create_output_file(self, gcode):
+    def create_output_file(self, gcode, folder_path="output/", relative_path=True):
         """ Saves the file to the output folder """
-        file_path = "output/" + self.config['OutputSettings']['filename'] + ".gcode"
+        file_path = folder_path + self.config['OutputSettings']['filename'] + ".gcode"
 
+        file_path = os.path.expanduser(file_path)
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
         with open(file_path, "w") as f:
