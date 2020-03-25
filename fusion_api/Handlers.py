@@ -242,7 +242,7 @@ class GenerateExecuteHandler(adsk.core.CommandEventHandler):
         #  create and show the progress dialog for remainder of process.
         progress = ui.createProgressDialog()
         progress.isCancelButtonShown = False
-        progress.show('ASMBL Code Generation', 'Posting Toolpaths', 0, 10)
+        progress.show('ASMBL Code Generation', 'Posting Toolpaths', 0, 7)
 
         try:
             postToolpaths(ui, cam, viewIntermediateFiles)
@@ -283,3 +283,5 @@ class GenerateExecuteHandler(adsk.core.CommandEventHandler):
         except:
             ui.messageBox('Failed combing gcode files:\n{}'.format(traceback.format_exc()))
             return
+
+        ui.messageBox('ASMBL gcode has been successfully created. File saved in \'~/Asmbl/output/\'')
