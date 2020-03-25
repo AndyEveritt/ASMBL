@@ -108,6 +108,7 @@ def run(context):
                                      resources='./resources/GenerateToolPath')
         generateControl.isPromotedByDefault = True
         generateControl.isPromoted = True
+        generateControl.commandDefinition.toolClipFilename = 'resources/GenerateAsmbl/tooltip.png'
             
 
         pass
