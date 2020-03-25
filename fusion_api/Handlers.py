@@ -128,7 +128,7 @@ def postToolpaths(ui, cam, viewResult):
 
 # Event handler that reacts when the command definitio is executed which
 # results in the command being created and this event being fired.
-class SetupCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
+class GenerateCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
     def __init__(self):
         super().__init__()
 
@@ -141,7 +141,7 @@ class SetupCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
             cmd = adsk.core.Command.cast(args.command)
 
             # Connect to the execute event.
-            onExecute = SetupExecuteHandler()
+            onExecute = GenerateExecuteHandler()
             cmd.execute.add(onExecute)
             handlers.append(onExecute)
 
@@ -208,7 +208,7 @@ class SetupCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 # Event handler for the execute event.
 
 
-class SetupExecuteHandler(adsk.core.CommandEventHandler):
+class GenerateExecuteHandler(adsk.core.CommandEventHandler):
     def __init__(self):
         super().__init__()
 

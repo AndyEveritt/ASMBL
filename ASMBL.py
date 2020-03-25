@@ -35,7 +35,7 @@ def create_panel(workspace, tab, panel_name):
     return panel
 
 
-def create_button(workspace, tab, panel, button_name, CreatedEventHandler, tooltip=None):
+def create_button(workspace, tab, panel, button_name, CreatedEventHandler, tooltip=None, resources=''):
     # We want this panel to be visible:
     workspace.activate()
     panel.isVisible = True
@@ -53,7 +53,7 @@ def create_button(workspace, tab, panel, button_name, CreatedEventHandler, toolt
     if not button:
         # Create a button command definition.
         button = cmdDefinitions.addButtonDefinition(
-            buttonId, button_name, tooltip)
+            buttonId, button_name, tooltip, resources)
 
     # Connect to the command created event.
     newcommandCreated = CreatedEventHandler()
@@ -99,13 +99,15 @@ def run(context):
         camWorkspace = allWorkspaces.itemById('CAMEnvironment')
 
         AsmblTab = create_tab(camWorkspace, 'Asmbl')
-        asmblSetupPanel = create_panel(camWorkspace, AsmblTab, 'Setup')
-        setupControl = create_button(camWorkspace, AsmblTab, asmblSetupPanel,
-                                     'New Setup', Handlers.SetupCreatedEventHandler)
+        # asmblSetupPanel = create_panel(camWorkspace, AsmblTab, 'Setup')
         
         asmblActionsPanel = create_panel(camWorkspace, AsmblTab, 'Actions')
         generateControl = create_button(camWorkspace, AsmblTab, asmblActionsPanel,
-                                     'Generate', Handlers.SetupCreatedEventHandler)
+                                     'Generate', Handlers.GenerateCreatedEventHandler,
+                                     tooltip='Generate combined gcode file',
+                                     resources='./resources/GenerateToolPath')
+        generateControl.isPromotedByDefault = True
+        generateControl.isPromoted = True
             
 
         pass
@@ -132,7 +134,8 @@ def stop(context):
         # check if tab exists
         tab = allTabs.itemById('AsmblTabId')
 
-        remove_pannel(tab, 'Setup')
+        # remove_pannel(tab, 'Setup')
+        remove_pannel(tab, 'Actions')
 
         # Remove our render tab from the UI
         if tab.isValid:
