@@ -13,7 +13,7 @@ import numpy as np
 import re
 
 
-class Simplify3DGcodeLayer:
+class AdditiveGcodeLayer:
     """ Stores a complete layer of gcode produced in Simplify3d """
 
     def __init__(self, gcode, name=None, layer_height=None):
@@ -176,7 +176,7 @@ class Parser:
         tmp_list = re.split('(; layer)', gcode_add)
 
         gcode_add_layers = []
-        gcode_add_layers.append(Simplify3DGcodeLayer(
+        gcode_add_layers.append(AdditiveGcodeLayer(
             tmp_list.pop(0),
             name="initialise",
             layer_height=0,
@@ -188,11 +188,11 @@ class Parser:
             name = layer.split(',')[0][2:]
 
             if 2*i == len(tmp_list) - 1:
-                gcode_add_layers.append(Simplify3DGcodeLayer(
+                gcode_add_layers.append(AdditiveGcodeLayer(
                     layer, 'end', inf))
                 continue
 
-            gcode_add_layers.append(Simplify3DGcodeLayer(layer))
+            gcode_add_layers.append(AdditiveGcodeLayer(layer))
 
         return gcode_add_layers
 
@@ -297,13 +297,13 @@ class Parser:
             self.merged_gcode_script += layer.gcode
 
     def set_last_additive_tool(self, layer):
-        if isinstance(layer, Simplify3DGcodeLayer):
+        if isinstance(layer, AdditiveGcodeLayer):
             process_list = layer.gcode.split('\nT')
             if len(process_list) > 1:
                 self.last_additive_tool = 'T' + process_list[-1].split('\n')[0]
 
     def tool_change(self, layer, prev_layer):
-        if type(layer) == Simplify3DGcodeLayer:
+        if type(layer) == AdditiveGcodeLayer:
             first_gcode = layer.gcode.split('\n')[1]
             if first_gcode[0] is not 'T':
                 self.merged_gcode_script += self.last_additive_tool + '\n'
