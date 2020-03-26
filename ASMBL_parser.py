@@ -32,11 +32,25 @@ class Simplify3DGcodeLayer:
 
     def get_layer_height(self, gcode):
         height = None
-        try:
-            height = float(gcode.split('\n')[0].split('Z = ')[-1])  # Simplify3D layer height
-        except ValueError:
-            # Fusion 360 layer height #TODO (THIS IS NOT ROBUST...IT NEEDS CHANGING)
-            height = float(gcode.split('Z')[1].split('\n')[0])
+        lines = gcode.split('\n')
+        
+        # Check for Simplify3D end of file code
+        if lines[0] == '; layer end':
+            height = inf
+        
+        else:
+            line_heights = []
+            for line in lines:
+                if line == '':
+                    continue
+                if line[0] == ';':
+                    continue
+                line_segments = line.split('Z')
+                if len(line_segments) > 1:
+                    line_height = float(line_segments[1].split(' ')[0])
+                    line_heights.append(line_height)
+            
+            height = min(line_heights)
 
         return height
 
