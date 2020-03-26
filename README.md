@@ -5,7 +5,7 @@ This code is designed to create a gcode file suitable for Additive & Subtractive
 There are 2 main ways this repo can be used.
 * As a standalone program that takes 2 input files
   * An additive`.gcode` file from Simplify3D using the `ASMBL.factory` file to get the appropriate settings.
-  * A subtractive `.nc` file from Fusion360.
+  * A subtractive `.gcode` file from Fusion360.
   * These files require specific setup for this program to work
 * As a **Fusion 360 add-in** where the **ENTIRE** workflow from designing the part to getting the merged gcode is in Fusion 360
   * This means no handling dirty STL files!!!
@@ -212,16 +212,14 @@ Update the `config.json` so that the following settings are correct for your pro
 {
     "InputFiles": {
         "additive_gcode": "path to Simplify3D additive .gcode file",
-        "subtractive_gcode": "path to Fusion360 CAM .nc file"
+        "subtractive_gcode": "path to Fusion360 CAM .gcode file"
     },
     "Printer": {
         "bed_centre_x": "mm from origin to bed centre in x axis",
-        "bed_centre_y": "mm from origin to bed centre in y axis",
-        "cam_tool": "Tool used for CAM (eg 'T3')"
+        "bed_centre_y": "mm from origin to bed centre in y axis"
     },
     "PrintSettings": {
-        "raft_height": "Height of the top layer of the raft",
-        "layer_height": "layer height of printed part"
+        "raft_height": "Height of the top layer of the raft"
     },
     "CamSettings": {
         "layer_overlap": "How many layers the tip of the cutter should be lower than the layers being cut",
