@@ -244,16 +244,25 @@ class GenerateExecuteHandler(adsk.core.CommandEventHandler):
         progress.isCancelButtonShown = False
         progress.show('ASMBL Code Generation', 'Posting Toolpaths', 0, 7)
 
+        outputFolder = cam.temporaryFolder
+        tmpAdditive = os.path.join(outputFolder, 'tmpAdditive.gcode')
+        tmpSubtractive = os.path.join(outputFolder, 'tmpSubtractive.gcode')
+
+        # remove old files
+        if os.path.exists(tmpAdditive):
+            os.remove(tmpAdditive)
+        if os.path.exists(tmpSubtractive):
+            os.remove(tmpSubtractive)
+
         try:
             postToolpaths(ui, cam, viewIntermediateFiles)
-            time.sleep(3)
+            while not (os.path.exists(tmpAdditive) and os.path.exists(tmpSubtractive)):
+                pass    # wait until files exist
+            time.sleep(1)
         except:
             ui.messageBox('Failed posting toolpaths:\n{}'.format(traceback.format_exc()))
             return
 
-        outputFolder = cam.temporaryFolder
-        tmpAdditive = os.path.join(outputFolder, 'tmpAdditive.gcode')
-        tmpSubtractive = os.path.join(outputFolder, 'tmpSubtractive.gcode')
 
         config = {
             "InputFiles": {

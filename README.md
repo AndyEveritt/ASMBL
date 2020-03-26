@@ -12,7 +12,7 @@ There are 2 main ways this repo can be used.
 
 The Fusion 360 add-in is the recommended option however the slicer is new and not widely adopted yet. Therefore, support for Simplify3D is present. The 2 slicers create mostly compatible gcode files. Until further notice, support for both programs will exist.
 
-
+![Fusion add-in demo](docs/images/asmbl_demo.gif)
 
 For the standalone program, download the latest release for the `ASMBL.exe`, an example `config.json`, and the Simplify3D factory file.
 
