@@ -2,16 +2,56 @@
 
 This code is designed to create a gcode file suitable for Additive & Subtractive Manufacturing By Layer (ASMBL).
 
-It takes 2 input files:
-* An additive`.gcode` file from Simplify3D using the `ASMBL.factory` file to get the appropriate settings.
-* A subtractive `.nc` file from Fusion360.
+There are 2 main ways this repo can be used.
+* As a standalone program that takes 2 input files
+  * An additive`.gcode` file from Simplify3D using the `ASMBL.factory` file to get the appropriate settings.
+  * A subtractive `.nc` file from Fusion360.
+  * These files require specific setup for this program to work
+* As a **Fusion 360 add-in** where the **ENTIRE** workflow from designing the part to getting the merged gcode is in Fusion 360
+  * This means no handling dirty STL files!!!
 
-These files require specific setup for this program to work
-
-Download the latest release for the `ASMBL.exe`, an example `config.json`, and the Simply3d factory file.
+The Fusion 360 add-in is the recommended option however the slicer is new and not widely adopted yet. Therefore, support for Simplify3D is present. The 2 slicers create mostly compatible gcode files. Until further notice, support for both programs will exist.
 
 
-# How to Setup
+
+For the standalone program, download the latest release for the `ASMBL.exe`, an example `config.json`, and the Simplify3D factory file.
+
+# Contents
+
+* Installation
+  * [Fusion Add-in Installation](docs/installation/fusion_addin.md)
+  * [Standalone Installation](docs/installation/standalone.md)
+* Usage
+  * [Fusion Add-in Usage](docs/usage/fusion_addin.md)
+  * [Standalone Usage](docs/usage/standalone.md)
+
+
+# Installation
+
+## Fusion 360 Add-in
+
+
+
+## Setting up the code for standalone/modification
+
+This only needs to be done if you want to modify the source code. Otherwise the `ASMBL.exe` can be used to eliminate the setup of the program.
+
+```bash
+git clone {repo address}
+cd ASMBL
+py -m venv env
+pip install -r requirements.txt
+```
+
+To run the standalone program, ensure the python virtual environment is enabled, then use `python main.py`
+
+## Compiling source code for standalone
+
+Run `pyinstaller --onefile main.py` to create the compiled `.exe` in the `dist` folder. The file will have the default name `main.exe`.
+
+# Usage
+
+
 
 ## Material Choice
 
@@ -216,16 +256,3 @@ The subtractive processes are displayed as travel moves, scroll through the laye
 <img src="docs/images/simplify3d_preview.png" width="480">
 
 
-# Setting up the code for modification
-
-```bash
-git clone {repo address}
-python3 -m venv env
-pip install -r requirements.txt
-```
-
-To run the program, ensure the python virtual environment is enabled, then use `python main.py`
-
-## Compiling source code
-
-Run `pyinstaller --onefile main.py` to create the compiled `.exe` in the `dist` folder
