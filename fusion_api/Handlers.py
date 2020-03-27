@@ -255,8 +255,12 @@ class GenerateExecuteHandler(adsk.core.CommandEventHandler):
             os.remove(tmpSubtractive)
 
         try:
+            start = time.time()
             postToolpaths(ui, cam, viewIntermediateFiles)
             while not (os.path.exists(tmpAdditive) and os.path.exists(tmpSubtractive)):
+                if time.time() > start + 10:
+                    ui.messageBox('Posting timed out')
+                    return
                 pass    # wait until files exist
             time.sleep(1)
         except:
