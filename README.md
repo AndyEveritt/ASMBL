@@ -18,16 +18,35 @@ For the standalone program, download the latest release for the `ASMBL.exe`, an 
 
 # Contents
 
-* [Installation](#Installation)
-  * [Fusion Add-in Installation](#fusion-360-add-in)
-  * [Fusion Design Workspace](#fusion360-design-workspace)
-  * [Standalone Installation](docs/installation/standalone.md)
-* [Usage](#usage)
-  * [Materials](#material-choice)
-  * [Additive Setup](#additive-setup)
-  * [Subtractive Setup](#subtractive-setup)
-  * [Post Processing](#post-processing)
-* [Contributions]
+- [Overview](#overview)
+- [Contents](#contents)
+- [Installation](#installation)
+  - [Fusion 360 Add-in](#fusion-360-add-in)
+  - [Fusion360 Design Workspace](#fusion360-design-workspace)
+  - [Setting up the code for standalone use (Simplify3D)](#setting-up-the-code-for-standalone-use-simplify3d)
+- [Usage](#usage)
+  - [Material Choice](#material-choice)
+  - [Additive Setup](#additive-setup)
+    - [Fusion360](#fusion360)
+    - [Standalone (Simplify3D, Other Slicers)](#standalone-simplify3d-other-slicers)
+  - [Subtractive Setup](#subtractive-setup)
+    - [Stock setup](#stock-setup)
+      - [Fusion360](#fusion360-1)
+      - [External Slicer](#external-slicer)
+    - [CAM setup](#cam-setup)
+      - [Tool Config](#tool-config)
+      - [2D Contour](#2d-contour)
+      - [2D Adaptive](#2d-adaptive)
+      - [3D Contour](#3d-contour)
+  - [Post Processing](#post-processing)
+    - [Fusion Add-in](#fusion-add-in)
+    - [Standalone](#standalone)
+      - [Config](#config)
+      - [Program](#program)
+  - [Run Standalone](#run-standalone)
+- [Contributions](#contributions)
+- [Authors and Acknowledgment](#authors-and-acknowledgment)
+- [License](#license)
 
 
 # Installation
@@ -98,7 +117,7 @@ The additive gcode can be setup in various ways.
 * Using Fusion360 for the complete workflow (recommended)
 * Using Simplify3D (or PrusaSlicer if you want to make a profile) to generate the FFF gcode and Fusion to generate the CAM gcode.
 
-### **Fusion360**
+### Fusion360
 
 First you need to create an offset of your model, this will control how much cut-in you have.
 
@@ -127,13 +146,13 @@ First you need to create an offset of your model, this will control how much cut
 
 * Optionally rename the setup to `Additive`
 
-### **Standalone (Simplify3D, Other Slicers)**
+### Standalone (Simplify3D, Other Slicers)
 
 Guide on how to create a properly configured gcode file can be generated can be found [here](docs/usage/standalone.md)
 
 ## Subtractive Setup
 
-### **Stock setup**
+### Stock setup
 
 * Create a new Setup by clicking `Setup` > `New Setup`
 * Select `From solid` for the Stock mode
@@ -157,7 +176,7 @@ The origin changes depending on if you are using Fusion360 or an external slicer
 * Move the origin to the bottom middle of the part
 * Orient the Z axis to be vertically upwards
 
-### **CAM setup**
+### CAM setup
 
 The CAMing proceedures for ASMBL can be configured with the following processes:
 
