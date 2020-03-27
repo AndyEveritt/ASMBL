@@ -356,8 +356,10 @@ Process tbd, open to contributions.
 
 # Authors and Acknowledgment
 
-@AndyEveritt - Code
-Greg Holloway - Printer
+Author | Contribution
+------ | -----------
+@AndyEveritt | Code
+Greg Holloway | Printer
 
 # License
 
