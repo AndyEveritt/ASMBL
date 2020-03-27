@@ -157,16 +157,8 @@ function onSection() {
   // set initial tool
   onExtruderChange(activeExtruder)
 
-  //homing
-  writeRetract(Z); // retract in Z
-
-  //lower build plate before homing in XY
-  var initialPosition = getFramePosition(currentSection.getInitialPosition());
-  writeBlock(gMotionModal.format(1), zOutput.format(initialPosition.z), feedOutput.format(highFeedrate));
-
-  // home XY
-  writeRetract(X, Y);
-  writeBlock(gFormat.format(92), eOutput.format(0));
+  // load mesh bed level
+  writeBlock(gFormat.format(29), sOutput.format(1));
 }
 
 function onRapid(_x, _y, _z) {
@@ -189,13 +181,14 @@ function onLinearExtrude(_x, _y, _z, _f, _e) {
   }
 }
 
-function onBedTemp(temp, wait) {
-  if (wait) {
-    writeBlock(mFormat.format(190), sOutput.format(temp));
-  } else {
-    writeBlock(mFormat.format(140), sOutput.format(temp));
-  }
-}
+// Temp controller not needed for ASMBL
+// function onBedTemp(temp, wait) {
+//   if (wait) {
+//     writeBlock(mFormat.format(190), sOutput.format(temp));
+//   } else {
+//     writeBlock(mFormat.format(140), sOutput.format(temp));
+//   }
+// }
 
 function onExtruderChange(id) {
   if (id < numberOfExtruders) {
@@ -218,17 +211,18 @@ function onLayer(num) {
   writeComment("layer, " + integerFormat.format(num) + " of " + integerFormat.format(layerCount));  // comment format to match Simplify3D
 }
 
-function onExtruderTemp(temp, wait, id) {
-  if (id < numberOfExtruders) {
-    if (wait) {
-      writeBlock(mFormat.format(109), sOutput.format(temp), tFormat.format(id));
-    } else {
-      writeBlock(mFormat.format(104), sOutput.format(temp), tFormat.format(id));
-    }
-  } else {
-    error(localize("This printer doesn't support the extruder ") + integerFormat.format(id) + " !");
-  }
-}
+// Temp controller not needed for ASMBL
+// function onExtruderTemp(temp, wait, id) {
+//   if (id < numberOfExtruders) {
+//     if (wait) {
+//       writeBlock(mFormat.format(109), sOutput.format(temp), tFormat.format(id));
+//     } else {
+//       writeBlock(mFormat.format(104), sOutput.format(temp), tFormat.format(id));
+//     }
+//   } else {
+//     error(localize("This printer doesn't support the extruder ") + integerFormat.format(id) + " !");
+//   }
+// }
 
 function onFanSpeed(speed, id) {
   // to do handle id information

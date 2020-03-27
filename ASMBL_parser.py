@@ -54,6 +54,16 @@ class AdditiveGcodeLayer:
 
         return height
 
+    def comment_all_gcode(self):
+        commented_gcode = ''
+        lines = self.gcode.split('\n')
+        for line in lines:
+            if line != '':
+                if line[0] != ';':
+                    line = '; ' + line
+                commented_gcode += line + '\n'
+        self.gcode = commented_gcode
+
 
 class CamGcodeLine:
     """ Stores a single line of fusion360 CAM gcode. """
@@ -176,11 +186,14 @@ class Parser:
         tmp_list = re.split('(; layer)', gcode_add)
 
         gcode_add_layers = []
-        gcode_add_layers.append(AdditiveGcodeLayer(
+        initialise_layer = AdditiveGcodeLayer(
             tmp_list.pop(0),
             name="initialise",
             layer_height=0,
-        ))    # slicer settings & initialise
+        )    # slicer settings & initialise
+        self.set_last_additive_tool(initialise_layer)
+        # initialise_layer.comment_all_gcode()
+        gcode_add_layers.append(initialise_layer)
 
         for i in range(ceil(len(tmp_list)/2)):
 
@@ -304,6 +317,8 @@ class Parser:
 
     def tool_change(self, layer, prev_layer):
         if type(layer) == AdditiveGcodeLayer:
+            if layer.name == 'initialise' or prev_layer.name == 'initialise':
+                return  # no need to add a tool change
             first_gcode = layer.gcode.split('\n')[1]
             if first_gcode[0] is not 'T':
                 self.merged_gcode_script += self.last_additive_tool + '\n'
@@ -322,7 +337,10 @@ class Parser:
         
         f.close()
 
-        os.startfile(file_path)
+        try:
+            os.startfile(file_path)
+        except FileNotFoundError:
+            pass
 
 
 if __name__ == "__main__":
