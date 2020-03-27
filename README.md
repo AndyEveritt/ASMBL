@@ -18,32 +18,51 @@ For the standalone program, download the latest release for the `ASMBL.exe`, an 
 
 # Contents
 
-* Installation
+* [Installation](#Installation)
   * [Fusion Add-in Installation](docs/installation/fusion_addin.md)
   * [Standalone Installation](docs/installation/standalone.md)
-* Usage
+* [Usage](#usage)
+  * [Materials](#material-choice)
   * [Fusion Add-in Usage](docs/usage/fusion_addin.md)
   * [Standalone Usage](docs/usage/standalone.md)
 
 
 # Installation
 
+
 ## Fusion 360 Add-in
 
+Install the repo in your desired folder location.
 
-
-## Setting up the code for standalone/modification
-
-This only needs to be done if you want to modify the source code. Otherwise the `ASMBL.exe` can be used to eliminate the setup of the program.
-
+**Windows**
 ```bash
-git clone {repo address}
+git clone https://github.com/AndyEveritt/ASMBL.git
 cd ASMBL
 py -m venv env
+source env/Scripts/activate
 pip install -r requirements.txt
 ```
 
 To run the standalone program, ensure the python virtual environment is enabled, then use `python main.py`
+
+
+* Open Fusion360
+* Click the add-in tool
+* Click the green plus to add an existing add-in
+<img src="docs/installation/images/fusion_add_existing.png" width=480>
+* Navigate to the ASMBL repo location and select the folder
+<img src="docs/installation/images/fusion_select_location.png" width=480>
+* Select the ASMBL add-in from the list, click `Run on Startup`, then `Run`
+<img src="docs/installation/images/fusion_run.png" width=240>
+
+## Setting up the code for standalone use (Simplify3D)
+
+Download the following files from the releases page:
+* `ASMBL.exe`
+* `config.json`
+* `ASMBL.factory`
+
+Ensure the config and exe are in the same folder for the program to run.
 
 ## Compiling source code for standalone
 
@@ -55,13 +74,7 @@ Run `pyinstaller --onefile main.py` to create the compiled `.exe` in the `dist` 
 
 ## Material Choice
 
-Material | Usage Advised | Comments
--------- | ------------- | --------
-PLA | No | Melts too much when cutting, causes the cutter to gunk up and strands of plastic to be left on/around part.
-MatX (ASA) | Yes | Cuts well
-EDGE (PET) | - | -
-XT-CF10 | - | -
-
+A details on materials that have been tested can be found [here](docs/materials.md).
 
 ## Simplify3D
 
