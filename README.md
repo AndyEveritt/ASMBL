@@ -19,12 +19,15 @@ For the standalone program, download the latest release for the `ASMBL.exe`, an 
 # Contents
 
 * [Installation](#Installation)
-  * [Fusion Add-in Installation](docs/installation/fusion_addin.md)
+  * [Fusion Add-in Installation](#fusion-360-add-in)
+  * [Fusion Design Workspace](#fusion360-design-workspace)
   * [Standalone Installation](docs/installation/standalone.md)
 * [Usage](#usage)
   * [Materials](#material-choice)
-  * [Fusion Add-in Usage](docs/usage/fusion_addin.md)
-  * [Standalone Usage](docs/usage/standalone.md)
+  * [Additive Setup](#additive-setup)
+  * [Subtractive Setup](#subtractive-setup)
+  * [Post Processing](#post-processing)
+* [Contributions]
 
 
 # Installation
@@ -43,17 +46,34 @@ source env/Scripts/activate
 pip install -r requirements.txt
 ```
 
-To run the standalone program, ensure the python virtual environment is enabled, then use `python main.py`
+**Important** When setting the virtual environment, the python version must be **64 bit**. Otherwise it will only work as a standalone program but not as a Fusion add-in. Notes on how venv works can be found here https://docs.python.org/3/library/venv.html
 
+
+To run the standalone program, ensure the python virtual environment is enabled, then use `python main.py`
 
 * Open Fusion360
 * Click the add-in tool
 * Click the green plus to add an existing add-in
+
 <img src="docs/installation/images/fusion_add_existing.png" width=480>
+
 * Navigate to the ASMBL repo location and select the folder
+
 <img src="docs/installation/images/fusion_select_location.png" width=480>
+
 * Select the ASMBL add-in from the list, click `Run on Startup`, then `Run`
+
 <img src="docs/installation/images/fusion_run.png" width=240>
+
+## Fusion360 Design Workspace
+
+To make orienting the coordinate axis between modeling, additive, and subtractive workspaces; it is highly recommended to change the `Default modeling orientation` in Fusion360.
+
+This can be done by:
+* Going to user preferences
+* Changing the `Default modeling orientation` to `Z up`
+
+<img src="docs/installation/images/fusion_z_up.png" width=480>
 
 ## Setting up the code for standalone use (Simplify3D)
 
@@ -64,52 +84,80 @@ Download the following files from the releases page:
 
 Ensure the config and exe are in the same folder for the program to run.
 
-## Compiling source code for standalone
-
-Run `pyinstaller --onefile main.py` to create the compiled `.exe` in the `dist` folder. The file will have the default name `main.exe`.
+To modify the source code follow the guide here: [Standalone Installation](docs/installation/standalone.md)
 
 # Usage
-
-
 
 ## Material Choice
 
 A details on materials that have been tested can be found [here](docs/materials.md).
 
-## Simplify3D
+## Additive Setup 
 
-* Open the `ASMBL.factory` file
-* Import the STL file
-* Orient the part in the desired orientation
-* Click `Center and Arrange`
-* Click `Prepare to Print!`
-* In the preview, use the layer view to find the height of the top layer of the raft, it is needed for `config.json`
-* Save the file to the desired project location
+The additive gcode can be setup in various ways.
+* Using Fusion360 for the complete workflow (recommended)
+* Using Simplify3D (or PrusaSlicer if you want to make a profile) to generate the FFF gcode and Fusion to generate the CAM gcode.
 
-### Settings that are important
+### **Fusion360**
 
-Tab | Setting | Default | Effect | Other Notes
---- | ------- | ------- | ------ | -----------
-Layer | Primary Layer Height | `0.3` | Layer height of the print | Thicker layers can create smoother surfaces with ASMBL (requires further testing). Layers less than 0.2 mm should be avoided
-Additions | Use Raft | `Enabled` | Prevents cutting into bed
-Other | Horizontal size compensation | `0.25` | Amount of horizontal cut-in | Any dimension that is not CAM'd will be this much too large
+First you need to create an offset of your model, this will control how much cut-in you have.
 
-### Other points
+* Make a duplicate of the model body(s).
+  * Select the body from the Browser menu on the left and `Ctrl+C`, `Ctrl+V`
+  * Make sure both bodies perfectly overlaid.
+* Offset all the faces on the new body that you wish to machine.
+  * Hide the original body to make selecting faces easier.
+  * An offset amount of ~0.2-0.3 mm works well in my testing.
+  * You do not want to offset any face you will not be able to machine, **ie the base**
 
-* It is important that the centre of the part is in the centre of the bed to ensure the CAM settings correctly align
-* The part must also be oriented with the same XYZ axis as the CAM'd part
+<img src="docs/usage/images/fusion_fff_offset.png" width=480>
 
-## Fusion360
+* You should have 2 of each body in your part, the exactly modelled part, and the offset part.
+* Enter the `Additive` Tab in the `Manufacturing` workspace in Fusion360.
+* Create a new setup
+  * Click `Select` Machine
+  * Import the `E3D - Tool Changer.machine` profile from the `settings` folder of this repo
+  * Click `Select` next to `Print Settings`
+  * Import the `ASMBL.printsetting` profile from the `settings` folder of this repo
+  * Under `Model` select the offset body created earlier
 
-### Stock setup
+<img src="docs/usage/images/fusion_fff_workspace.png" width=480>
+<img src="docs/usage/images/fusion_fff_machine.png" width=480>
+<img src="docs/usage/images/fusion_fff_setup.png" width=480>
+
+* Optionally rename the setup to `Additive`
+
+### **Standalone (Simplify3D, Other Slicers)**
+
+Guide on how to create a properly configured gcode file can be generated can be found [here](docs/usage/standalone.md)
+
+## Subtractive Setup
+
+### **Stock setup**
 
 * Create a new Setup by clicking `Setup` > `New Setup`
 * Select `From solid` for the Stock mode
 * Click on the part body to select it
+  * Select the offset body if created earlier
+* Under the `Model` option in the `Setup` tab, select the original part body.
+
+The origin changes depending on if you are using Fusion360 or an external slicer for the additive gcode.
+
+#### Fusion360
+
+* Under `Work Coordinate System` select:
+  * Orientation: `Model orientation`
+  * Origin: `Model origin`
+* The origin should now align with the previously configured FFF setup
+
+<img src="docs/usage/images/fusion_cam_setup.png" width=480>
+
+#### External Slicer
+
 * Move the origin to the bottom middle of the part
 * Orient the Z axis to be vertically upwards
 
-### CAM setup
+### **CAM setup**
 
 The CAMing proceedures for ASMBL can be configured with the following processes:
 
@@ -118,6 +166,14 @@ Process | Usage
 2D Contour | Used for vertical side walls of parts
 2D Adaptive | Used for top surfacing
 3D Contour | Used for vertical & close to vertical side walls (including chamfers & filets). May not be able to cut internal features (ie walls with a roof over them)
+
+#### Tool Config
+
+When selecting the tool you must renumber the tool to match the tool number on your printer.
+
+A `Cutting Feedrate` of 500 mm/min works well.
+
+<img src="docs/usage/images/fusion_cam_tool.png" width=480>
 
 #### 2D Contour
 
@@ -138,7 +194,6 @@ Process | Usage
     * Ensure this is an integer multiple of the layer height to get the most consistent results
   * Disable `Stock to Leave`
 * `Linking`
-  * Set `Vertical Lead-In Radius` to `0` mm
   * Disable `Ramp`
 
 2D Contour can be used when fine control over the process is needed. Undercuts can be done using this process.
@@ -159,7 +214,6 @@ Process | Usage
   * Set `Direction` to `Conventional`
   * Disable `Stock to Leave`
 * `Linking`
-  * Set `Vertical Lead In/Out Radius` to `0` mm
   * Set `Ramp Type` to `Plunge`
 
 
@@ -181,19 +235,15 @@ Multiple surfaces at different heights can be selected with the same process. Th
     * ie top and bottom of the surface
 * `Passes`
   * Set `Direction` to `Conventional`
-  * Set `Finishing Overlap` to non zero for better finish
   * Set `Maximum Stepdown` to be equal to ~0.5-2 layers
   * Disable `Stock to Leave`
 * `Linking`
   * Set `Maximum Stay Down Distance` to `0` mm
-  * Set `Vertical Lead-In Radius` to `0` mm
   * Set `Ramp Type` to `Profile`
 
 
 
 3D Contour can be used for most none flat surfaces that have nothing above them. They are good for quickly CAM'ing a large number of faces.
-
-None flat surfaces that have something above them can be CAM'd with some Fusion 360 magic. But this can be an involved process depending on the geometry.
 
 <img src="docs/images/3d_contour_1.png" width="480">
 
@@ -201,23 +251,38 @@ The machining boundary can be used to restrict which faces are machined. Here th
 
 <img src="docs/images/3d_contour_machining_boundaries.png" width="480">
 
-Undercuts do not work with 3D Contour. 2D Contour can be used for this instead.
+Additional work is required to machine undercuts, however it can be done using 3D Contours. This is beyond the scope of this guide. Overhangs are even more work but again can be done by creating additional offset faces.
 
-<img src="docs/images/3d_contour_undercuts.png" width="480">
+<img src="docs/usage/images/fusion_cam_undercuts.png" width="480">
 
 >**If any of the above CAM information is wrong or can be improved, please add an issue and I will update the guide**
 
-### Post Processing
+## Post Processing
+
+### Fusion Add-in
+
+* Click on the `ASMBL` tab along the top navigation bar
+* Click `Post Process`
+  * If all the toolpaths have not been previously generated or are out of date, you can tick the box to re generate all toolpaths
+    * This currently has a bug if the additive toolpath isn't the last to generate where the progress bar will not complete. If this happens just close the progress bar are rerun the post process command
+  * Set the remainder of the settings depending on your design by following the tooltips when hovering over them.
+  * Click `OK`
+* The output gcode will be saved in `~/ASMBL/output/`
+  * If the file name already exists, it will be overwritten without warning.
+  * The generated file will automatically open in your default `.gcode` editor.
+  * **Always preview the gcode fully to check it for mistakes** This is Beta software, there will be bugs.
+
+### Standalone
 
 * Generate and Simulate the full Setup to ensure in looks sensible
 * Click `Actions` > `Post Process`
-* Select the `BoXYZ (Grbl) / boxyz` config
+* Select the `asmbl_cam.cps` config from the `post_processors` folder in this repo
 * Set the `Output folder` to the desired project location
 * Click `Post`
 
-## Config
+#### Config
 
-The `config.json` contains the parameters that control how the ASMBL parser merges the 2 input files
+The `config.json` contains the parameters that control how the ASMBL parser merges the 2 input files if running the program standalone.
 
 Update the `config.json` so that the following settings are correct for your project:
 
@@ -244,7 +309,7 @@ Update the `config.json` so that the following settings are correct for your pro
 }
 ```
 
-## Program
+#### Program
 
 The program takes the following arguments:
 
@@ -252,7 +317,7 @@ Arg (long) | Arg (short) | Default | Usage
 ---------- | ----------- | ------- | -----
 `--config` | `-C` | `config.json` | Path to the configuration JSON file
 
-## Run
+## Run Standalone
 
 To run the program, ensure the `config.json` is configured correctly, then run the `ASMBL.exe`
 
@@ -266,4 +331,15 @@ The subtractive processes are displayed as travel moves, scroll through the laye
 
 <img src="docs/images/simplify3d_preview.png" width="480">
 
+# Contributions
 
+Process tbd, open to contributions.
+
+# Authors and Acknowledgment
+
+@AndyEveritt - Code
+Greg Holloway - Printer
+
+# License
+
+GPL-3.0

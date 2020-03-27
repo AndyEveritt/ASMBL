@@ -128,7 +128,7 @@ def postToolpaths(ui, cam, viewResult):
 
 # Event handler that reacts when the command definitio is executed which
 # results in the command being created and this event being fired.
-class GenerateCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
+class PostProcessCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
     def __init__(self):
         super().__init__()
 
@@ -141,7 +141,7 @@ class GenerateCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
             cmd = adsk.core.Command.cast(args.command)
 
             # Connect to the execute event.
-            onExecute = GenerateExecuteHandler()
+            onExecute = PostProcessExecuteHandler()
             cmd.execute.add(onExecute)
             handlers.append(onExecute)
 
@@ -170,9 +170,11 @@ class GenerateCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
             tabSettingsChildInputs = tabCmdInputSettings.children
 
             # Create bool value input to check whether you should generate toolpaths.
-            tabSettingsChildInputs.addBoolValueInput('generateToolpaths', 'Generate Toolpaths', True, '', False)
+            generateToolpathsInput = tabSettingsChildInputs.addBoolValueInput('generateToolpaths', 'Generate Toolpaths', True, '', False)
+            generateToolpathsInput.tooltip = 'Regenerated all toolpaths.'
             
-            tabSettingsChildInputs.addBoolValueInput('viewIntermediateFiles', 'View Intermediate Files', True, '', False)
+            viewIntermediateFilesInput = tabSettingsChildInputs.addBoolValueInput('viewIntermediateFiles', 'View Intermediate Files', True, '', False)
+            viewIntermediateFilesInput.tooltip = 'Pre-merged gcode files will be opened in your default txt editor.'
 
             # Create an editable textbox input.
             tabSettingsChildInputs.addTextBoxCommandInput('outputName', 'Output File Name', '1001', 1, False)
@@ -208,7 +210,7 @@ class GenerateCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 # Event handler for the execute event.
 
 
-class GenerateExecuteHandler(adsk.core.CommandEventHandler):
+class PostProcessExecuteHandler(adsk.core.CommandEventHandler):
     def __init__(self):
         super().__init__()
 

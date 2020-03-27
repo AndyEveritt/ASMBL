@@ -102,13 +102,16 @@ def run(context):
         # asmblSetupPanel = create_panel(camWorkspace, AsmblTab, 'Setup')
         
         asmblActionsPanel = create_panel(camWorkspace, AsmblTab, 'Actions')
-        generateControl = create_button(camWorkspace, AsmblTab, asmblActionsPanel,
-                                     'Generate', Handlers.GenerateCreatedEventHandler,
-                                     tooltip='Generate combined gcode file',
-                                     resources='./resources/GenerateToolPath')
-        generateControl.isPromotedByDefault = True
-        generateControl.isPromoted = True
-        generateControl.commandDefinition.toolClipFilename = 'resources/GenerateAsmbl/tooltip.png'
+        asmblPostProcessControl = create_button(camWorkspace, AsmblTab, asmblActionsPanel,
+                                     'Post Process', Handlers.PostProcessCreatedEventHandler,
+                                     tooltip='Generate combined gcode file for ASMBL',
+                                     resources='./resources/PostProcess')
+        asmblPostProcessControl.isPromotedByDefault = True
+        asmblPostProcessControl.isPromoted = True
+        asmblPostProcessControl.commandDefinition.tooltipDescription = '\
+            <br>Requires an FFF setup and a milling setup</br>\
+            <br>Will not work if there are any more/fewer setups</br>'
+        asmblPostProcessControl.commandDefinition.toolClipFilename = 'resources/GenerateAsmbl/tooltip.png'
             
 
         pass
