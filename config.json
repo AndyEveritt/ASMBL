@@ -1,7 +1,7 @@
 {
     "InputFiles": {
         "additive_gcode": "gcode/tmpAdditive.gcode",
-        "subtractive_gcode": "gcode/tmpSubtractive.nc"
+        "subtractive_gcode": "gcode/tmpSubtractive.gcode"
     },
     "Printer": {
         "bed_centre_x": 0,

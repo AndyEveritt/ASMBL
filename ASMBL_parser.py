@@ -123,6 +123,22 @@ class CamGcodeLayer:
 
         return gcode
 
+    def set_min_z_height(self):
+        op_height = min(
+            [line.layer_height for line in self.operations])
+        self.height = op_height
+
+    def set_max_z_height(self):
+        lines = []
+        # Filter out retracts, only care about max Z height of cutting ops
+        for line in self.operations:
+            if len(line.gcode.split('F')) > 1:
+                lines.append(line)
+        
+        op_height = max(
+            [line.layer_height for line in lines])
+        self.height = op_height
+
 
 class Parser:
     """ Main parsing class. """
@@ -251,9 +267,10 @@ class Parser:
         for operation in operations:
             if operation:
                 for op_instance in operation:
-                    op_height = min(
-                        [line.layer_height for line in op_instance.operations])
-                    op_instance.height = op_height
+                    if op_instance.name.startswith('(Radial'):
+                        op_instance.set_max_z_height()
+                    else:
+                        op_instance.set_min_z_height()
                     unordered_ops.append(op_instance)
 
         ordered_operations = sorted(unordered_ops, key=lambda x: x.height)
