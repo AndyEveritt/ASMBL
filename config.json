@@ -1,7 +1,7 @@
 {
     "InputFiles": {
         "additive_gcode": "gcode/Spinner_Demo/Spinner_Demo_MM.gcode",
-        "subtractive_gcode": "gcode/Spinner_Demo/Spinner_Demo.nc"
+        "subtractive_gcode": "gcode/Spinner_Demo/Spinner_Demo_CAM_np.gcode"
     },
     "Printer": {
         "bed_centre_x": 150,

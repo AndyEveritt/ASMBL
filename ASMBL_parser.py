@@ -108,6 +108,7 @@ class CamGcodeLayer:
         self.operations = operations
         self.name = name
         self.tool = tool
+        self.planar = None
 
         if self.operations:
             self.gcode = self.parse_gcode(self.operations)
@@ -123,12 +124,12 @@ class CamGcodeLayer:
 
         return gcode
 
-    def set_min_z_height(self):
+    def get_min_z_height(self):
         op_height = min(
             [line.layer_height for line in self.operations])
-        self.height = op_height
+        return op_height
 
-    def set_max_z_height(self):
+    def get_max_z_height(self):
         lines = []
         # Filter out retracts, only care about max Z height of cutting ops
         for line in self.operations:
@@ -137,7 +138,46 @@ class CamGcodeLayer:
         
         op_height = max(
             [line.layer_height for line in lines])
-        self.height = op_height
+        return op_height
+    
+    def get_retract_height(self):
+        retract_height = max(
+            [line.layer_height for line in self.operations])
+        return retract_height
+
+    def set_z_height(self, threshold=0.2):
+        # Default threshold is the default vertical lead-in radius in Fusion 360
+        max_height = self.get_max_z_height()
+        min_height = self.get_min_z_height()
+
+        if (max_height - min_height) > (threshold + 0.0001):
+            self.height = max_height
+            self.planar = False
+
+            # Issues with reordering these operations later can cause a travel move through the part
+            # Retracts the tool before and after operation
+            # retract_height = self.get_retract_height()
+            # initial_gcode = self.operations[0].gcode.split('Z')[0] + 'Z' + str(retract_height) + '\n'
+            # end_gcode = self.operations[-1].gcode.split('Z')[0] + 'Z' + str(retract_height) + '\n'
+            # self.gcode = initial_gcode + self.gcode + end_gcode
+
+        else:
+            self.height = min_height
+            self.planar = True
+
+
+class NonPlanarOperation():
+    def __init__(self, operation):
+        self.name = operation[0].name
+        self.tool = operation[0].tool
+        self.cam_layers = operation
+        self.set_z_height()
+    
+    def set_z_height(self):
+        self.height = -inf
+        for layer in self.cam_layers:
+            if layer.height > self.height:
+                self.height = layer.height
 
 
 class Parser:
@@ -267,48 +307,65 @@ class Parser:
         for operation in operations:
             if operation:
                 for op_instance in operation:
-                    # if op_instance.name.startswith('(Radial'):
-                    #     op_instance.set_max_z_height()
-                    # else:
-                    op_instance.set_min_z_height()
-                    unordered_ops.append(op_instance)
+                    op_instance.set_z_height()
+
+        for operation in operations:
+            non_planar_layers = [op_instance for op_instance in operation if not op_instance.planar]
+            planar_layers = [op_instance for op_instance in operation if op_instance.planar]
+
+            for op_instance in planar_layers:
+                unordered_ops.append(op_instance)
+            
+            if non_planar_layers:
+                non_planar_op = NonPlanarOperation(non_planar_layers)
+                unordered_ops.append(non_planar_op)
 
         ordered_operations = sorted(unordered_ops, key=lambda x: x.height)
         layer_overlap = self.config['CamSettings']['layer_overlap']
 
-        for i, operation in enumerate(ordered_operations):
-            later_ops = [op for op in ordered_operations if op.height > operation.height]
+        for i, op_instance in enumerate(ordered_operations):
+            later_ops = [op for op in ordered_operations if op.height > op_instance.height]
             if len(later_ops) > 0:
                 next_op_height = min([op.height for op in later_ops])
                 later_additive = [layer for layer in self.gcode_add_layers if layer.layer_height > next_op_height]
 
                 if layer_overlap == 0:
-                    operation.layer_height = next_op_height
+                    op_instance.layer_height = next_op_height
 
                 elif len(later_additive) == 0:
-                    operation.layer_height = next_op_height
+                    op_instance.layer_height = next_op_height
 
                 elif len(later_additive) >= layer_overlap:
-                    operation.layer_height = later_additive[layer_overlap - 1].layer_height
+                    op_instance.layer_height = later_additive[layer_overlap - 1].layer_height
 
                 else:
-                    operation.layer_height = later_additive[-1].layer_height
+                    op_instance.layer_height = later_additive[-1].layer_height
 
             else:  # no later ops
-                later_additive = [layer for layer in self.gcode_add_layers if layer.layer_height > operation.height]
+                later_additive = [layer for layer in self.gcode_add_layers if layer.layer_height > op_instance.height]
 
                 if len(later_additive) >= layer_overlap:
-                    operation.layer_height = later_additive[layer_overlap - 1].layer_height
+                    op_instance.layer_height = later_additive[layer_overlap - 1].layer_height
                 
                 elif len(later_additive) == 0:   # no further printing
                     # add 10 since it is unlikely that the printed layer height will exceed 10 mm
                     # but still want to place cutting after a print at the same height
-                    operation.layer_height = operation.height + 10
+                    op_instance.layer_height = op_instance.height + 10
                 
                 else:
-                    operation.layer_height = later_additive[-1].layer_height
+                    op_instance.layer_height = later_additive[-1].layer_height
 
-        return ordered_operations
+        # Expand out non planar layers
+        expanded_ordered_operations = []
+        for layer in ordered_operations:
+            if type(layer) == NonPlanarOperation:
+                for non_planar_layer in layer.cam_layers:
+                    non_planar_layer.layer_height = layer.layer_height
+                    expanded_ordered_operations.append(non_planar_layer)
+            else:
+                expanded_ordered_operations.append(layer)
+
+        return expanded_ordered_operations
 
     def merge_gcode_layers(self, gcode_add, cam_operations):
         """ Takes the individual CAM instructions and merges them into the additive file from Simplify3D """

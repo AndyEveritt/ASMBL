@@ -34,10 +34,12 @@ For the standalone program, download the latest release for the `ASMBL.exe`, an 
       - [Fusion360](#fusion360-1)
       - [External Slicer](#external-slicer)
     - [CAM setup](#cam-setup)
+      - [Tips & Tricks](#tips--tricks)
       - [Tool Config](#tool-config)
       - [2D Contour](#2d-contour)
       - [2D Adaptive](#2d-adaptive)
       - [3D Contour](#3d-contour)
+      - [Non-planar Operations](#non-planar-operations)
   - [Post Processing](#post-processing)
     - [Fusion Add-in](#fusion-add-in)
     - [Standalone](#standalone)
@@ -186,6 +188,44 @@ Process | Usage
 2D Adaptive | Used for top surfacing
 3D Contour | Used for vertical & close to vertical side walls (including chamfers & filets). May not be able to cut internal features (ie walls with a roof over them)
 
+#### Tips & Tricks
+
+This program separates each of the CAM operations into segments separated by local maximas in tool height (ie retracts).
+
+This is key to understanding how to CAM a model effectively. Below are guidelines but they may not work for every situation.
+Use this overview to understand what to look for when setting up the CAM operations.
+
+Each of these segments is then classified as either planar or non-planar.
+
+* Planar segments are where the cutting happens on the XY plane.
+* Non-planar segments also cut in the Z axis.
+
+The height of each segment is determined:
+
+* For planar segments, it is the minimum height the cutter is active.
+* For non-planar segments, it is the maximum height the cutter is active.
+
+All the non-planar segments of an operation are then grouped to maintain their order. The layer height at which the
+segment or group of segments needs to occur is calculated.
+
+> The height of a group of non-planar segments is the maximum cutting height of all of the segments in the group.
+
+The segments and groups of segments merged with the additive layers by sorting all additive and subtractive segments by layer height.
+
+> **Because CAM operations are separated into segments by local maximas in tool height, it is vital that the tool retracts between every layer, otherwise the operation will be considered non-planar and it could result in the cutter or tool body colliding with your part.**
+
+Below are examples of a good operation and a bad operation. The only difference is the `linking` settings.
+
+In this operation the tool retracts after every layer. It will be properly segmented and inserted at the correct location.
+
+<img src="docs/usage/images/fusion_cam_good_retract.png" width=480>
+
+The same operation with different `linking` settings can result in the following. 2 of the layers do not retract between them, this will cause those layers to be treated as non-planar and due to the geometry of the part, it is likely the tool body will collide with the part during printing.
+
+<img src="docs/usage/images/fusion_cam_bad_retract.png" width=480>
+
+> **Always inspect the gcode with travel moves turned on after it has been generated. This program reorders a sgnificant proportion of the gcode, it can happen that a single missing/wrong line causes the tool to pass through the model, this is unlikely if sticking with planar operations but a possibility when using non-planar**
+
 #### Tool Config
 
 When selecting the tool you must renumber the tool to match the tool number on your printer.
@@ -275,6 +315,19 @@ Additional work is required to machine undercuts, however it can be done using 3
 <img src="docs/usage/images/fusion_cam_undercuts.png" width="480">
 
 >**If any of the above CAM information is wrong or can be improved, please add an issue and I will update the guide**
+
+#### Non-planar Operations
+
+Non-planar operations can be configured similarly to the planar operations described above. More care is required when creating the toolpaths as is it easy to accidentally cut into the part.
+
+Some non-planar operations that have been tested to work are:
+
+* Parallel
+* Radial
+* Spiral
+* Scallop
+
+<img src="docs/usage/images/fusion_cam_nonplanar.png" width=480>
 
 ## Post Processing
 
