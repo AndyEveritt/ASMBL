@@ -267,10 +267,10 @@ class Parser:
         for operation in operations:
             if operation:
                 for op_instance in operation:
-                    if op_instance.name.startswith('(Radial'):
-                        op_instance.set_max_z_height()
-                    else:
-                        op_instance.set_min_z_height()
+                    # if op_instance.name.startswith('(Radial'):
+                    #     op_instance.set_max_z_height()
+                    # else:
+                    op_instance.set_min_z_height()
                     unordered_ops.append(op_instance)
 
         ordered_operations = sorted(unordered_ops, key=lambda x: x.height)
