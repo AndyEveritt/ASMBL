@@ -1,18 +1,18 @@
 {
     "InputFiles": {
-        "additive_gcode": "gcode/tmpAdditive.gcode",
-        "subtractive_gcode": "gcode/tmpSubtractive.gcode"
+        "additive_gcode": "gcode/Spinner_Demo/Spinner_Demo_MM.gcode",
+        "subtractive_gcode": "gcode/Spinner_Demo/Spinner_Demo.nc"
     },
     "Printer": {
-        "bed_centre_x": 0,
-        "bed_centre_y": 0
+        "bed_centre_x": 150,
+        "bed_centre_y": 100
     },
     "PrintSettings": {
-        "raft_height": 0
+        "raft_height": 2.333
     },
     "CamSettings": {
         "layer_overlap": 2,
-        "layer_dropdown": 0
+        "layer_dropdown": 0.2
     },
     "OutputSettings": {
         "filename": "tmp"
