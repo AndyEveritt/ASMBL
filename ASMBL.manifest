@@ -1,0 +1,13 @@
+{
+	"autodeskProduct":	"Fusion360",
+	"type":	"addin",
+	"id":	"c48d4cde-3023-49c1-95f7-3515aba13ecd",
+	"author":	"AndyEveritt",
+	"description":	{
+		"":	"Additive and Subtractive Manufacturing By Layer"
+	},
+	"version":	"1.0.2",
+	"runOnStartup":	false,
+	"supportedOS":	"windows|mac",
+	"editEnabled":	true
+}
