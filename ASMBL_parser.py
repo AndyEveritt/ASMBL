@@ -1,15 +1,10 @@
 import sys
 import os
-venv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'env', 'Lib', 'site-packages')
-if venv_path not in sys.path:
-    sys.path.append(venv_path)  # add venv to python path
-
-from scipy.signal import find_peaks
 from math import (
     inf,
     ceil,
+    floor,
 )
-import numpy as np
 import re
 
 
@@ -264,6 +259,32 @@ class Parser:
             gcode_add_layers.append(AdditiveGcodeLayer(layer))
 
         return gcode_add_layers
+    
+    def find_maxima(self, numbers):
+        maxima = []
+        length = len(numbers)
+        flat_index = 0
+        prev_increasing = False
+        if length > 3:
+            for i in range(1, length-1):
+                if numbers[i] > numbers[i-1]:
+                    flat_index = 0
+                    prev_increasing = True
+                    if numbers[i] > numbers[i+1]:
+                        maxima.append(i)
+                        prev_increasing = False
+
+                elif prev_increasing:
+                    if numbers[i] >= numbers[i-1] and numbers[i] == numbers[i+1]:
+                        flat_index += 1
+                    
+                    elif numbers[i] == numbers[i-1] and numbers[i] > numbers[i+1]:
+                        mid_index = ceil(flat_index/2 + 0.5)
+                        maxima.append(i - mid_index)
+                        flat_index = 0
+                        prev_increasing = False
+
+        return maxima
 
     def split_cam_operations(self, gcode_sub):
         """ Takes fusion360 CAM gcode and splits the operations by execution height """
@@ -283,8 +304,8 @@ class Parser:
             # extract information from string
             lines = [CamGcodeLine(line, self.offset) for line in lines]
 
-            line_heights = np.array([line.layer_height for line in lines])
-            local_peaks = find_peaks(line_heights)[0]
+            line_heights = [line.layer_height for line in lines]
+            local_peaks = self.find_maxima(line_heights)
 
             if len(local_peaks) > 0:
                 op_lines = lines[0: local_peaks[0]+1]

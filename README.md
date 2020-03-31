@@ -50,42 +50,14 @@ For the standalone program, download the latest release for the `ASMBL.exe`, an 
 
 # Installation
 
-
 ## Fusion 360 Add-in
-
-Ensure you have a 64 bit instance of Python installed on your computer. This can be install from https://www.python.org/downloads/
-
-Python version 3.7.2 was used for development. Python >3.6 should still be compatible.
-
-You can check the python version of an existing install by typing the python path in the terminal (eg `C:\\Python37\\python`).
-
-<img src="docs/installation/images/python_version.png" width=480>
 
 Install the repo in your desired folder location.
 
 **Windows**
 ```bash
 git clone https://github.com/AndyEveritt/ASMBL.git
-cd ASMBL
-{PATH_TO_YOUR_64BIT_PYTHON} -m venv env
-source env/Scripts/activate
 ```
-
-Check the venv is using 64 bit Python by typing `python` in the terminal
-
-```bash
-pip install -r requirements.txt
-```
-
-> If you don't have `git` installed, you can simply download the zip file and extract it in your desired location. Then setup the venv as before.
-
-**Important** When setting the virtual environment, the python version must be **64 bit**. Otherwise it will only work as a standalone program but not as a Fusion add-in. Notes on how venv works can be found here https://docs.python.org/3/library/venv.html
-
-
-
-If the venv is not 64 bit then you need to find where your 64 bit instance of python is installed on your machine (install one if you don't have one https://www.python.org/downloads/). Then:
-* Delete the `env` folder you have previously created
-* Replace the `py -m venv env` with `{PATH_TO_YOUR_64BIT_PYTHON} -m venv env`
 
 To run the standalone program, ensure the python virtual environment is enabled, then use `python main.py`
 
