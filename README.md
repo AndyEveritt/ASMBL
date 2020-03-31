@@ -69,6 +69,11 @@ git clone https://github.com/AndyEveritt/ASMBL.git
 cd ASMBL
 {PATH_TO_YOUR_64BIT_PYTHON} -m venv env
 source env/Scripts/activate
+```
+
+Check the venv is using 64 bit Python by typing `python` in the terminal
+
+```bash
 pip install -r requirements.txt
 ```
 

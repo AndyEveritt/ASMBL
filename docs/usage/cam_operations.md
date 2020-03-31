@@ -34,6 +34,10 @@ Multiple surfaces at different heights can be selected with the same process. Th
 * `Geometry`
   * Select the boundry contours for the sides you would like to cut (everything in the boundry will be cut)
   * You can specify an out and inner boundary to only cut a certain region
+  * Play with the settings here to make it do what you want
+  * If you want to machine everything:
+    * Set `Machining Boundary` to `Silhouette`
+    * Set `Tool Containment` to `Tool outside boundary`
 * `Heights`
   * Set the `Clearance Height` and `Retract Height` equal
     * These must be equal for all processes
