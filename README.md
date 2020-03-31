@@ -36,10 +36,7 @@ For the standalone program, download the latest release for the `ASMBL.exe`, an 
     - [CAM setup](#cam-setup)
       - [Tips & Tricks](#tips--tricks)
       - [Tool Config](#tool-config)
-      - [2D Contour](#2d-contour)
-      - [2D Adaptive](#2d-adaptive)
-      - [3D Contour](#3d-contour)
-      - [Non-planar Operations](#non-planar-operations)
+      - [Operation Setup](#operation-setup)
   - [Post Processing](#post-processing)
     - [Fusion Add-in](#fusion-add-in)
     - [Standalone](#standalone)
@@ -56,19 +53,34 @@ For the standalone program, download the latest release for the `ASMBL.exe`, an 
 
 ## Fusion 360 Add-in
 
+Ensure you have a 64 bit instance of Python installed on your computer. This can be install from https://www.python.org/downloads/
+
+Python version 3.7.2 was used for development. Python >3.6 should still be compatible.
+
+You can check the python version of an existing install by typing the python path in the terminal (eg `C:\\Python37\\python`).
+
+<img src="docs/installation/images/python_version.png" width=480>
+
 Install the repo in your desired folder location.
 
 **Windows**
 ```bash
 git clone https://github.com/AndyEveritt/ASMBL.git
 cd ASMBL
-py -m venv env
+{PATH_TO_YOUR_64BIT_PYTHON} -m venv env
 source env/Scripts/activate
 pip install -r requirements.txt
 ```
 
+> If you don't have `git` installed, you can simply download the zip file and extract it in your desired location. Then setup the venv as before.
+
 **Important** When setting the virtual environment, the python version must be **64 bit**. Otherwise it will only work as a standalone program but not as a Fusion add-in. Notes on how venv works can be found here https://docs.python.org/3/library/venv.html
 
+
+
+If the venv is not 64 bit then you need to find where your 64 bit instance of python is installed on your machine (install one if you don't have one https://www.python.org/downloads/). Then:
+* Delete the `env` folder you have previously created
+* Replace the `py -m venv env` with `{PATH_TO_YOUR_64BIT_PYTHON} -m venv env`
 
 To run the standalone program, ensure the python virtual environment is enabled, then use `python main.py`
 
@@ -234,100 +246,9 @@ A `Cutting Feedrate` of 500 mm/min works well.
 
 <img src="docs/usage/images/fusion_cam_tool.png" width=480>
 
-#### 2D Contour
+#### Operation Setup
 
-* `Tool`
-  * Select/create a cutting tool with appropriate dimensions for what is installed on you ASMBL machine
-* `Geometry`
-  * Select all the contours for the sides you would like to cut
-* `Heights`
-  * Set the `Clearance Height`, `Retract Height`, and `Feed Height` equal
-    * These must be equal for all processes
-  * Set the `Top Height` and `Bottom Height` appropriately for the desired process
-    * ie top and bottom of the surface
-* `Passes`
-  * Set `Sideways Compensation` to `Right (conventional)`
-  * Set `Finishing Overlap` to non zero for better finish
-  * Enable `Multiple Depths`
-  * Set `Maximum Roughing Stepdown` to be equal to ~1-2 layers
-    * Ensure this is an integer multiple of the layer height to get the most consistent results
-  * Disable `Stock to Leave`
-* `Linking`
-  * Disable `Ramp`
-
-2D Contour can be used when fine control over the process is needed. Undercuts can be done using this process.
-
-<img src="docs/images/2d_contour_undercuts.png" width=480>
-
-#### 2D Adaptive
-
-* `Tool`
-  * Select/create a cutting tool with appropriate dimensions for what is installed on you ASMBL machine
-* `Geometry`
-  * Select the surface you would like to top surface
-* `Heights`
-  * Set the `Clearance Height`, `Retract Height`, and `Feed Height` equal
-    * These must be equal for all processes
-* `Passes`
-  * Set `Optimal Load` to ~0.2-0.8 mm
-  * Set `Direction` to `Conventional`
-  * Disable `Stock to Leave`
-* `Linking`
-  * Set `Ramp Type` to `Plunge`
-
-
-Multiple surfaces at different heights can be selected with the same process. This can help reduce setup time in Fusion
-
-<img src="docs/images/2d_adaptive_selection.png" width=480>
-
-#### 3D Contour
-
-* `Tool`
-  * Select/create a cutting tool with appropriate dimensions for what is installed on you ASMBL machine
-* `Geometry`
-  * Select the boundry contours for the sides you would like to cut (everything in the boundry will be cut)
-  * You can specify an out and inner boundary to only cut a certain region
-* `Heights`
-  * Set the `Clearance Height` and `Retract Height` equal
-    * These must be equal for all processes
-  * Set the `Top Height` and `Bottom Height` appropriately for the desired process
-    * ie top and bottom of the surface
-* `Passes`
-  * Set `Direction` to `Conventional`
-  * Set `Maximum Stepdown` to be equal to ~0.5-2 layers
-  * Disable `Stock to Leave`
-* `Linking`
-  * Set `Maximum Stay Down Distance` to `0` mm
-  * Set `Ramp Type` to `Profile`
-
-
-
-3D Contour can be used for most none flat surfaces that have nothing above them. They are good for quickly CAM'ing a large number of faces.
-
-<img src="docs/images/3d_contour_1.png" width="480">
-
-The machining boundary can be used to restrict which faces are machined. Here the centre sloped surface is diselected but everything within the inner centre hole is machined.
-
-<img src="docs/images/3d_contour_machining_boundaries.png" width="480">
-
-Additional work is required to machine undercuts, however it can be done using 3D Contours. This is beyond the scope of this guide. Overhangs are even more work but again can be done by creating additional offset faces.
-
-<img src="docs/usage/images/fusion_cam_undercuts.png" width="480">
-
->**If any of the above CAM information is wrong or can be improved, please add an issue and I will update the guide**
-
-#### Non-planar Operations
-
-Non-planar operations can be configured similarly to the planar operations described above. More care is required when creating the toolpaths as is it easy to accidentally cut into the part.
-
-Some non-planar operations that have been tested to work are:
-
-* Parallel
-* Radial
-* Spiral
-* Scallop
-
-<img src="docs/usage/images/fusion_cam_nonplanar.png" width=480>
+Full setup details for operations can be found here: [CAM Operation Setup](docs/usage/cam_operations.md)
 
 ## Post Processing
 
