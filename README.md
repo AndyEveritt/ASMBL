@@ -131,8 +131,16 @@ First you need to create an offset of your model, this will control how much cut
   * Import the `ASMBL.printsetting` profile from the `settings` folder of this repo
   * Under `Model` select the offset body created earlier
 
+Workspace:
+
 <img src="docs/usage/images/fusion_fff_workspace.png" width=480>
+
+Machine:
+
 <img src="docs/usage/images/fusion_fff_machine.png" width=480>
+
+Setup:
+
 <img src="docs/usage/images/fusion_fff_setup.png" width=480>
 
 * Optionally rename the setup to `Additive`
