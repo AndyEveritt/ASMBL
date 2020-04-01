@@ -120,10 +120,11 @@ def postToolpaths(ui, cam, viewResult):
             cam.postProcess(setup, postInput)
         
     # open the output folder in Finder on Mac or in Explorer on Windows
-    if (os.name == 'posix'):
-        os.system('open "%s"' % outputFolder)
-    elif (os.name == 'nt'):
-        os.startfile(outputFolder)
+    if viewResult:
+        if (os.name == 'posix'):
+            os.system('open "%s"' % outputFolder)
+        elif (os.name == 'nt'):
+            os.startfile(outputFolder)
 
 
 # Event handler that reacts when the command definitio is executed which
@@ -294,7 +295,14 @@ class PostProcessExecuteHandler(adsk.core.CommandEventHandler):
 
         try:
             asmbl_parser = Parser(config, progress)
-            asmbl_parser.create_output_file(asmbl_parser.merged_gcode_script, '~/Asmbl/output/')
+
+            outputFolder = os.path.expanduser('~/Asmbl/output/')
+            asmbl_parser.create_output_file(asmbl_parser.merged_gcode_script, outputFolder)
+
+            if (os.name == 'posix'):
+                os.system('open "%s"' % outputFolder)
+            elif (os.name == 'nt'):
+                os.startfile(outputFolder)
         except:
             ui.messageBox('Failed combing gcode files:\n{}'.format(traceback.format_exc()))
             return
