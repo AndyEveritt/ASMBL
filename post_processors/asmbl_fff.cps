@@ -65,6 +65,8 @@ function writeBlock() {
 function onOpen() {
   getPrinterGeometry();
 
+  writeComment("Fusion360")
+
   if (programName) {
     writeComment(programName);
   }

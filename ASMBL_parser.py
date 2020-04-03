@@ -187,6 +187,8 @@ class Parser:
                        config['PrintSettings']['raft_height'] - config['CamSettings']['layer_dropdown']
                        )
 
+        # self.fff_program = self.get_fff_program()
+
         self.last_additive_tool = None
         self.last_subtractive_tool = None
 
@@ -199,6 +201,11 @@ class Parser:
             progress.message = 'Opening files'
             progress.progressValue += 1
         self.open_files(self.config)
+
+        if progress:
+            progress.message = 'Converting additive gcode to relative positioning'
+            progress.progressValue += 1
+        self.gcode_add = self.convert_relative(self.gcode_add)
 
         if progress:
             progress.message = 'Spliting additive gcode layers'
@@ -231,6 +238,38 @@ class Parser:
 
         gcode_sub_file = open(config['InputFiles']['subtractive_gcode'], 'r')
         self.gcode_sub = gcode_sub_file.read()
+
+    def convert_relative(self, gcode_abs):
+        last_tool = None
+        last_e = {}     # {'tool': last extrusion value}
+
+        lines = gcode_abs.split('\n')
+
+        gcode_rel = ''
+
+        for line in lines:
+            if line == '':
+                continue
+
+            line_start = line.split(' ')[0]
+            if line_start[0] == 'T':
+                last_tool = line_start
+            elif line_start == 'G92':
+                extrusion_reset = line.split('E')[1]
+                last_e[last_tool] = extrusion_reset
+            elif line_start == 'G0' or line_start == 'G1':
+                try:
+                    line_split = line.split('E')
+                    current_extrusion = line_split[1]
+                    extrusion_diff = float(current_extrusion) - float(last_e[last_tool])
+                    last_e[last_tool] = current_extrusion
+                    line = line_split[0] + 'E' + str(extrusion_diff)
+                except IndexError:
+                    pass
+            gcode_rel += line + '\n'
+        
+        return gcode_rel
+
 
     def split_additive_layers(self, gcode_add):
         """ Takes Simplify3D gcode and splits in by layer """
