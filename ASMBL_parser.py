@@ -16,6 +16,8 @@ class AdditiveGcodeLayer:
         self.name = name
         self.layer_height = layer_height
 
+        self.remove_park_gcode()
+
         if name is None:
             self.name = self.get_name(self.gcode)
 
@@ -58,6 +60,11 @@ class AdditiveGcodeLayer:
                     line = '; ' + line
                 commented_gcode += line + '\n'
         self.gcode = commented_gcode
+    
+    def remove_park_gcode(self):
+        # Fusion adds some dirty end gcode
+        # Kill it with fire until they let us control the end gcode with the post processor
+        self.gcode = self.gcode.split('; move to park position')[0]
 
 
 class CamGcodeLine:
@@ -148,13 +155,6 @@ class CamGcodeLayer:
         if (max_height - min_height) > (threshold + 0.0001):
             self.height = max_height
             self.planar = False
-
-            # Issues with reordering these operations later can cause a travel move through the part
-            # Retracts the tool before and after operation
-            # retract_height = self.get_retract_height()
-            # initial_gcode = self.operations[0].gcode.split('Z')[0] + 'Z' + str(retract_height) + '\n'
-            # end_gcode = self.operations[-1].gcode.split('Z')[0] + 'Z' + str(retract_height) + '\n'
-            # self.gcode = initial_gcode + self.gcode + end_gcode
 
         else:
             self.height = min_height
@@ -251,7 +251,7 @@ class Parser:
             layer = tmp_list[2*i] + tmp_list[2*i+1]
             name = layer.split(',')[0][2:]
 
-            if 2*i == len(tmp_list) - 1:
+            if 2*i + 1 == len(tmp_list) - 1:
                 gcode_add_layers.append(AdditiveGcodeLayer(
                     layer, 'end', inf))
                 continue
@@ -348,7 +348,7 @@ class Parser:
             later_ops = [op for op in ordered_operations if op.height > op_instance.height]
             if len(later_ops) > 0:
                 next_op_height = min([op.height for op in later_ops])
-                later_additive = [layer for layer in self.gcode_add_layers if layer.layer_height > next_op_height]
+                later_additive = [layer for layer in self.gcode_add_layers[:-1] if layer.layer_height > next_op_height]
 
                 if layer_overlap == 0:
                     op_instance.layer_height = next_op_height
@@ -363,7 +363,7 @@ class Parser:
                     op_instance.layer_height = later_additive[-1].layer_height
 
             else:  # no later ops
-                later_additive = [layer for layer in self.gcode_add_layers if layer.layer_height > op_instance.height]
+                later_additive = [layer for layer in self.gcode_add_layers[:-1] if layer.layer_height > op_instance.height]
 
                 if len(later_additive) >= layer_overlap:
                     op_instance.layer_height = later_additive[layer_overlap - 1].layer_height
@@ -375,6 +375,10 @@ class Parser:
                 
                 else:
                     op_instance.layer_height = later_additive[-1].layer_height
+            
+            if op_instance.layer_height == inf:
+                raise ValueError("CAM op height can't be 'inf'")
+                
 
         # Expand out non planar layers
         expanded_ordered_operations = []

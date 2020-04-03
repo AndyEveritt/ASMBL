@@ -55,6 +55,7 @@ var zOutput = createVariable({prefix: "Z"}, zFormat);
 var feedOutput = createVariable({prefix: "F"}, feedFormat);
 var eOutput = createVariable({prefix: "E"}, xyzFormat);  // Extrusion length
 var sOutput = createVariable({prefix: "S", force: true}, xyzFormat);  // Parameter temperature or speed
+var pOutput = createVariable({prefix: "P", force: true}, xyzFormat);  // P parameter
 
 // Writes the specified block.
 function writeBlock() {
@@ -130,7 +131,16 @@ function getPrinterGeometry() {
 }
 
 function onClose() {
+  writeComment("layer end,")
   writeComment("END OF GCODE");
+  
+  // turn off the ESC
+  writeBlock(mFormat.format(42), pOutput.format(7), sOutput.format(0))
+
+  // deselect tool
+  writeBlock(tFormat.format(-1));
+
+  // writeBlock(gMotionModal.format(0), 0, 0, zFormat.format(printerLimits.z.max));
 }
 
 function onComment(message) {
@@ -159,6 +169,9 @@ function onSection() {
 
   // load mesh bed level
   writeBlock(gFormat.format(29), sOutput.format(1));
+
+  // turn on the ESC
+  writeBlock(mFormat.format(280), pOutput.format(7), sOutput.format(40))
 }
 
 function onRapid(_x, _y, _z) {
@@ -208,7 +221,7 @@ function onExtrusionReset(length) {
 }
 
 function onLayer(num) {
-  writeComment("layer, " + integerFormat.format(num) + " of " + integerFormat.format(layerCount));  // comment format to match Simplify3D
+  writeComment("layer " + integerFormat.format(num) + " of " + integerFormat.format(layerCount) + ",");  // comment format to match Simplify3D
 }
 
 // Temp controller not needed for ASMBL
