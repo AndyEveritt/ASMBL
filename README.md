@@ -16,6 +16,10 @@ The Fusion 360 add-in is the recommended option however the slicer is new and no
 
 For the standalone program, download the latest release for the `ASMBL.exe`, an example `config.json`, and the Simplify3D factory file.
 
+<br>
+<br>
+<br>
+
 # Contents
 
 - [Overview](#overview)
@@ -34,7 +38,7 @@ For the standalone program, download the latest release for the `ASMBL.exe`, an 
       - [Fusion360](#fusion360-1)
       - [External Slicer](#external-slicer)
     - [CAM setup](#cam-setup)
-      - [Tips & Tricks](#tips--tricks)
+      - [**Key Understanding Point**](#key-understanding-point)
       - [Tool Config](#tool-config)
       - [Operation Setup](#operation-setup)
   - [Post Processing](#post-processing)
@@ -47,6 +51,9 @@ For the standalone program, download the latest release for the `ASMBL.exe`, an 
 - [Authors and Acknowledgment](#authors-and-acknowledgment)
 - [License](#license)
 
+<br>
+<br>
+<br>
 
 # Installation
 
@@ -96,11 +103,17 @@ Ensure the config and exe are in the same folder for the program to run.
 
 To modify the source code follow the guide here: [Standalone Installation](docs/installation/standalone.md)
 
+<br>
+<br>
+<br>
+
 # Usage
 
 ## Material Choice
 
 A details on materials that have been tested can be found [here](docs/materials.md).
+
+<br>
 
 ## Additive Setup 
 
@@ -149,6 +162,8 @@ Setup:
 
 Guide on how to create a properly configured gcode file can be generated can be found [here](docs/usage/standalone.md)
 
+<br>
+
 ## Subtractive Setup
 
 ### Stock setup
@@ -175,6 +190,8 @@ The origin changes depending on if you are using Fusion360 or an external slicer
 * Move the origin to the bottom middle of the part
 * Orient the Z axis to be vertically upwards
 
+<br>
+
 ### CAM setup
 
 The CAMing proceedures for ASMBL can be configured with the following processes:
@@ -185,7 +202,11 @@ Process | Usage
 2D Adaptive | Used for top surfacing
 3D Contour | Used for vertical & close to vertical side walls (including chamfers & filets). May not be able to cut internal features (ie walls with a roof over them)
 
-#### Tips & Tricks
+<br>
+<br>
+<br>
+
+#### **Key Understanding Point**
 
 This program separates each of the CAM operations into segments separated by local maximas in tool height (ie retracts).
 
@@ -222,6 +243,10 @@ The same operation with different `linking` settings can result in the following
 <img src="docs/usage/images/fusion_cam_bad_retract.png" width=480>
 
 > **Always inspect the gcode with travel moves turned on after it has been generated. This program reorders a sgnificant proportion of the gcode, it can happen that a single missing/wrong line causes the tool to pass through the model, this is unlikely if sticking with planar operations but a possibility when using non-planar**
+
+<br>
+<br>
+<br>
 
 #### Tool Config
 
