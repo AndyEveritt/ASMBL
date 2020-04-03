@@ -1,22 +1,22 @@
+import sys
+import os
 from math import (
     inf,
     ceil,
+    floor,
 )
-
-from scipy.signal import find_peaks
-
 import re
-import os
-import numpy as np
 
 
-class Simplify3DGcodeLayer:
+class AdditiveGcodeLayer:
     """ Stores a complete layer of gcode produced in Simplify3d """
 
     def __init__(self, gcode, name=None, layer_height=None):
         self.gcode = gcode
         self.name = name
         self.layer_height = layer_height
+
+        self.remove_park_gcode()
 
         if name is None:
             self.name = self.get_name(self.gcode)
@@ -28,15 +28,50 @@ class Simplify3DGcodeLayer:
         return gcode.split(',')[0][2:]
 
     def get_layer_height(self, gcode):
-        return float(gcode.split('\n')[0].split('Z = ')[-1])
+        height = None
+        lines = gcode.split('\n')
+        
+        # Check for Simplify3D end of file code
+        if lines[0] == '; layer end':
+            height = inf
+        
+        else:
+            line_heights = []
+            for line in lines:
+                if line == '':
+                    continue
+                if line[0] == ';':
+                    continue
+                line_segments = line.split('Z')
+                if len(line_segments) > 1:
+                    line_height = float(line_segments[1].split(' ')[0])
+                    line_heights.append(line_height)
+            
+            height = min(line_heights)
+
+        return height
+
+    def comment_all_gcode(self):
+        commented_gcode = ''
+        lines = self.gcode.split('\n')
+        for line in lines:
+            if line != '':
+                if line[0] != ';':
+                    line = '; ' + line
+                commented_gcode += line + '\n'
+        self.gcode = commented_gcode
+    
+    def remove_park_gcode(self):
+        # Fusion adds some dirty end gcode
+        # Kill it with fire until they let us control the end gcode with the post processor
+        self.gcode = self.gcode.split('; move to park position')[0]
 
 
 class CamGcodeLine:
     """ Stores a single line of fusion360 CAM gcode. """
 
-    def __init__(self, gcode, offset, name=None):
+    def __init__(self, gcode, offset):
         self.gcode = self.offset_gcode(gcode, offset)
-        self.name = name
         self.layer_height = self.get_layer_height(self.gcode)
 
     def offset_gcode(self, gcode, offset):
@@ -70,10 +105,16 @@ class CamGcodeLine:
 class CamGcodeLayer:
     """ Stores all the CAM operations in a specific layer. """
 
-    def __init__(self, height, operations):
+    def __init__(self, operations, name=None, tool=None, height=None):
         self.height = height
         self.operations = operations
-        self.gcode = self.parse_gcode(self.operations)
+        self.name = name
+        self.tool = tool
+        self.planar = None
+
+        if self.operations:
+            self.gcode = self.parse_gcode(self.operations)
+
         self.layer_height = None  # height to print to before running the operation
 
     def parse_gcode(self, operations):
@@ -85,24 +126,104 @@ class CamGcodeLayer:
 
         return gcode
 
+    def get_min_z_height(self):
+        op_height = min(
+            [line.layer_height for line in self.operations])
+        return op_height
+
+    def get_max_z_height(self):
+        lines = []
+        # Filter out retracts, only care about max Z height of cutting ops
+        for line in self.operations:
+            if len(line.gcode.split('F')) > 1:
+                lines.append(line)
+        
+        op_height = max(
+            [line.layer_height for line in lines])
+        return op_height
+    
+    def get_retract_height(self):
+        retract_height = max(
+            [line.layer_height for line in self.operations])
+        return retract_height
+
+    def set_z_height(self, threshold=0.2):
+        # Default threshold is the default vertical lead-in radius in Fusion 360
+        max_height = self.get_max_z_height()
+        min_height = self.get_min_z_height()
+
+        if (max_height - min_height) > (threshold + 0.0001):
+            self.height = max_height
+            self.planar = False
+
+        else:
+            self.height = min_height
+            self.planar = True
+
+
+class NonPlanarOperation():
+    def __init__(self, operation):
+        self.name = operation[0].name
+        self.tool = operation[0].tool
+        self.cam_layers = operation
+        self.set_z_height()
+    
+    def set_z_height(self):
+        self.height = -inf
+        for layer in self.cam_layers:
+            if layer.height > self.height:
+                self.height = layer.height
+
 
 class Parser:
     """ Main parsing class. """
 
-    def __init__(self, config):
+    def __init__(self, config, progress=None):
         self.config = config
+        self.progress = progress    # progress bar for Fusion add-in
         self.offset = (config['Printer']['bed_centre_x'],
                        config['Printer']['bed_centre_y'],
 
-                       config['PrintSettings']['raft_height'] -
-                       config['PrintSettings']['layer_height']*config['CamSettings']['layer_intersect']
+                       config['PrintSettings']['raft_height'] - config['CamSettings']['layer_dropdown']
                        )
 
-        self.last_process_tool = None
+        self.last_additive_tool = None
+        self.last_subtractive_tool = None
 
+        self.main()
+
+    def main(self):
+        progress = self.progress
+
+        if progress:
+            progress.message = 'Opening files'
+            progress.progressValue += 1
         self.open_files(self.config)
-        self.split_additive_layers(self.gcode_add)
-        self.split_cam_operations(self.gcode_sub)
+
+        if progress:
+            progress.message = 'Spliting additive gcode layers'
+            progress.progressValue += 1
+        self.gcode_add_layers = self.split_additive_layers(self.gcode_add)
+
+        if progress:
+            progress.message = 'Spliting subtractive gcode layers'
+            progress.progressValue += 1
+        operations = self.split_cam_operations(self.gcode_sub)
+
+        if progress:
+            progress.message = 'Ordering subtractive gcode layers'
+            progress.progressValue += 1
+        self.cam_operations = self.order_cam_operations_by_layer(operations)
+
+        if progress:
+            progress.message = 'Merging gcode layers'
+            progress.progressValue += 1
+        self.merged_gcode = self.merge_gcode_layers(self.gcode_add_layers, self.cam_operations)
+
+        if progress:
+            progress.message = 'Creating gcode script'
+            progress.progressValue += 1
+        self.create_gcode_script(self.merged_gcode)
 
     def open_files(self, config):
         gcode_add_file = open(config['InputFiles']['additive_gcode'], 'r')
@@ -116,94 +237,165 @@ class Parser:
         tmp_list = re.split('(; layer)', gcode_add)
 
         gcode_add_layers = []
-        gcode_add_layers.append(Simplify3DGcodeLayer(
-            tmp_list[0],
+        initialise_layer = AdditiveGcodeLayer(
+            tmp_list.pop(0),
             name="initialise",
             layer_height=0,
-        ))    # slicer settings & initialise
+        )    # slicer settings & initialise
+        self.set_last_additive_tool(initialise_layer)
+        # initialise_layer.comment_all_gcode()
+        gcode_add_layers.append(initialise_layer)
 
         for i in range(ceil(len(tmp_list)/2)):
-            if i == 0:
-                continue
 
-            layer = tmp_list[2*i-1] + tmp_list[2*i]
+            layer = tmp_list[2*i] + tmp_list[2*i+1]
             name = layer.split(',')[0][2:]
 
-            if 2*i == len(tmp_list) - 1:
-                gcode_add_layers.append(Simplify3DGcodeLayer(
+            if 2*i + 1 == len(tmp_list) - 1:
+                gcode_add_layers.append(AdditiveGcodeLayer(
                     layer, 'end', inf))
                 continue
 
-            gcode_add_layers.append(Simplify3DGcodeLayer(layer))
+            gcode_add_layers.append(AdditiveGcodeLayer(layer))
 
-        self.gcode_add_layers = gcode_add_layers
+        return gcode_add_layers
+    
+    def find_maxima(self, numbers):
+        maxima = []
+        length = len(numbers)
+        flat_index = 0
+        prev_increasing = False
+        if length > 3:
+            for i in range(1, length-1):
+                if numbers[i] > numbers[i-1]:
+                    flat_index = 0
+                    prev_increasing = True
+                    if numbers[i] > numbers[i+1]:
+                        maxima.append(i)
+                        prev_increasing = False
+
+                elif prev_increasing:
+                    if numbers[i] >= numbers[i-1] and numbers[i] == numbers[i+1]:
+                        flat_index += 1
+                    
+                    elif numbers[i] == numbers[i-1] and numbers[i] > numbers[i+1]:
+                        mid_index = ceil(flat_index/2 + 0.5)
+                        maxima.append(i - mid_index)
+                        flat_index = 0
+                        prev_increasing = False
+
+        return maxima
 
     def split_cam_operations(self, gcode_sub):
         """ Takes fusion360 CAM gcode and splits the operations by execution height """
         tmp_operation_list = gcode_sub.split('\n\n')
 
-        operations = [None]
+        operations = []
 
         for i, operation in enumerate(tmp_operation_list):
-            if i == 0:  # ignore setup gcode
-                continue
 
             lines = operation.split('\n')
             name = lines.pop(0)
+            tool = lines.pop(0)
             lines = [line for line in lines if line != '']
 
             operations.append([])
 
             # extract information from string
-            lines = [CamGcodeLine(line, self.offset, name) for line in lines]
+            lines = [CamGcodeLine(line, self.offset) for line in lines]
 
-            line_heights = np.array([line.layer_height for line in lines])
-            local_peaks = find_peaks(line_heights)[0]
+            line_heights = [line.layer_height for line in lines]
+            local_peaks = self.find_maxima(line_heights)
 
             if len(local_peaks) > 0:
-                operations[i].append(lines[0: local_peaks[0]+1])
+                op_lines = lines[0: local_peaks[0]+1]
+                operations[i].append(CamGcodeLayer(op_lines, name, tool))
 
                 for index, peak in enumerate(local_peaks[:-1]):
-                    operations[i].append(lines[local_peaks[index]: local_peaks[index+1]+1])
+                    op_lines = lines[local_peaks[index]: local_peaks[index+1]+1]
+                    operations[i].append(CamGcodeLayer(op_lines, name, tool))
 
-                operations[i].append(lines[local_peaks[-1]:])
+                op_lines = lines[local_peaks[-1]:]
+                operations[i].append(CamGcodeLayer(op_lines, name, tool))
             else:
-                operations[i].append(lines)
+                operations[i].append(CamGcodeLayer(lines, name, tool))
 
-        self.order_cam_operations_by_layer(operations)
+        return operations
 
     def order_cam_operations_by_layer(self, operations):
         """ Takes a list of cam operations and calculates the layer that they should be executed """
-        ordered_operations = []
+        unordered_ops = []
         for operation in operations:
             if operation:
                 for op_instance in operation:
-                    op_height = min(
-                        [height.layer_height for height in op_instance])
-                    ordered_operations.append(
-                        CamGcodeLayer(op_height, op_instance))
+                    op_instance.set_z_height()
 
-        ordered_operations.sort(key=lambda x: x.height)
-        for i, operation in enumerate(ordered_operations):
-            later_ops = [
-                op for op in ordered_operations if op.height > operation.height]
-            try:
-                operation.layer_height = min(
-                    [op.height for op in later_ops]) + self.config['PrintSettings']['layer_height'] * self.config['CamSettings']['layer_dropdown']
-            except ValueError:
-                operation.layer_height = operation.height + \
-                    self.config['PrintSettings']['layer_height'] * self.config['CamSettings']['layer_dropdown']
+        for operation in operations:
+            non_planar_layers = [op_instance for op_instance in operation if not op_instance.planar]
+            planar_layers = [op_instance for op_instance in operation if op_instance.planar]
 
-        self.cam_operations = ordered_operations
-        self.merged_gcode = self.merge_gcode_layers(
-            self.gcode_add_layers, self.cam_operations)
+            for op_instance in planar_layers:
+                unordered_ops.append(op_instance)
+            
+            if non_planar_layers:
+                non_planar_op = NonPlanarOperation(non_planar_layers)
+                unordered_ops.append(non_planar_op)
+
+        ordered_operations = sorted(unordered_ops, key=lambda x: x.height)
+        layer_overlap = self.config['CamSettings']['layer_overlap']
+
+        for i, op_instance in enumerate(ordered_operations):
+            later_ops = [op for op in ordered_operations if op.height > op_instance.height]
+            if len(later_ops) > 0:
+                next_op_height = min([op.height for op in later_ops])
+                later_additive = [layer for layer in self.gcode_add_layers[:-1] if layer.layer_height > next_op_height]
+
+                if layer_overlap == 0:
+                    op_instance.layer_height = next_op_height
+
+                elif len(later_additive) == 0:
+                    op_instance.layer_height = next_op_height
+
+                elif len(later_additive) >= layer_overlap:
+                    op_instance.layer_height = later_additive[layer_overlap - 1].layer_height
+
+                else:
+                    op_instance.layer_height = later_additive[-1].layer_height
+
+            else:  # no later ops
+                later_additive = [layer for layer in self.gcode_add_layers[:-1] if layer.layer_height > op_instance.height]
+
+                if len(later_additive) >= layer_overlap:
+                    op_instance.layer_height = later_additive[layer_overlap - 1].layer_height
+                
+                elif len(later_additive) == 0:   # no further printing
+                    # add 10 since it is unlikely that the printed layer height will exceed 10 mm
+                    # but still want to place cutting after a print at the same height
+                    op_instance.layer_height = op_instance.height + 10
+                
+                else:
+                    op_instance.layer_height = later_additive[-1].layer_height
+            
+            if op_instance.layer_height == inf:
+                raise ValueError("CAM op height can't be 'inf'")
+                
+
+        # Expand out non planar layers
+        expanded_ordered_operations = []
+        for layer in ordered_operations:
+            if type(layer) == NonPlanarOperation:
+                for non_planar_layer in layer.cam_layers:
+                    non_planar_layer.layer_height = layer.layer_height
+                    expanded_ordered_operations.append(non_planar_layer)
+            else:
+                expanded_ordered_operations.append(layer)
+
+        return expanded_ordered_operations
 
     def merge_gcode_layers(self, gcode_add, cam_operations):
         """ Takes the individual CAM instructions and merges them into the additive file from Simplify3D """
         merged_gcode = gcode_add + cam_operations
         merged_gcode.sort(key=lambda x: x.layer_height)
-
-        self.create_gcode_script(merged_gcode)
 
         return merged_gcode
 
@@ -211,34 +403,43 @@ class Parser:
         self.merged_gcode_script = ''
         prev_layer = gcode[0]
         for layer in gcode:
-            self.set_last_process_tool(prev_layer)
+            self.set_last_additive_tool(prev_layer)
             self.tool_change(layer, prev_layer)
             prev_layer = layer
             self.merged_gcode_script += layer.gcode
 
-    def set_last_process_tool(self, layer):
-        if isinstance(layer, Simplify3DGcodeLayer):
+    def set_last_additive_tool(self, layer):
+        if isinstance(layer, AdditiveGcodeLayer):
             process_list = layer.gcode.split('\nT')
             if len(process_list) > 1:
-                self.last_process_tool = 'T' + process_list[-1].split('\n')[0]
+                self.last_additive_tool = 'T' + process_list[-1].split('\n')[0]
 
     def tool_change(self, layer, prev_layer):
-        if type(layer) != type(prev_layer):
-            if type(layer) == Simplify3DGcodeLayer:
-                first_gcode = layer.gcode.split('\n')[1]
-                if first_gcode[0] is not 'T':
-                    self.merged_gcode_script += self.last_process_tool + '\n'
-            elif type(layer == CamGcodeLayer):
-                self.merged_gcode_script += self.config['Printer']['cam_tool'] + '\n'
+        if type(layer) == AdditiveGcodeLayer:
+            if layer.name == 'initialise' or prev_layer.name == 'initialise':
+                return  # no need to add a tool change
+            first_gcode = layer.gcode.split('\n')[1]
+            if first_gcode[0] is not 'T':
+                self.merged_gcode_script += self.last_additive_tool + '\n'
+        elif type(layer) == CamGcodeLayer:
+            self.merged_gcode_script += layer.tool + '\n'
 
-    def create_output_file(self, gcode):
+    def create_output_file(self, gcode, folder_path="output/", relative_path=True):
         """ Saves the file to the output folder """
-        file_path = "output/" + self.config['OutputSettings']['filename'] + ".gcode"
+        file_path = folder_path + self.config['OutputSettings']['filename'] + ".gcode"
 
+        file_path = os.path.expanduser(file_path)
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
         with open(file_path, "w") as f:
             f.write(gcode)
+        
+        f.close()
+
+        try:
+            os.startfile(file_path)
+        except FileNotFoundError:
+            pass
 
 
 if __name__ == "__main__":

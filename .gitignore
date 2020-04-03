@@ -1,7 +1,13 @@
 .vscode
-*tmp.gcode
-*tmp.nc
+
+# 3D files
+*.gcode
+*.nc
 *.stl
+*.dmp
+*.f3d
+
+*.db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
