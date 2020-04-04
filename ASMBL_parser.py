@@ -187,8 +187,6 @@ class Parser:
                        config['PrintSettings']['raft_height'] - config['CamSettings']['layer_dropdown']
                        )
 
-        # self.fff_program = self.get_fff_program()
-
         self.last_additive_tool = None
         self.last_subtractive_tool = None
 
