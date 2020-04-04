@@ -255,9 +255,9 @@ class Parser:
                 continue
 
             line_start = line.split(' ')[0]
-            if line_start == 'G90':
+            if line_start == ('M82'):
                 absolute_mode = True
-            elif line_start == 'G91':
+            elif line_start == ('M83'):
                 absolute_mode = False
 
             if line_start[0] == 'T':
@@ -272,6 +272,7 @@ class Parser:
                         line_split = line.split('E')
                         current_extrusion = line_split[1]
                         extrusion_diff = float(current_extrusion) - float(last_e[last_tool])
+                        extrusion_diff = round(extrusion_diff, 3)
                         last_e[last_tool] = current_extrusion
                         line = line_split[0] + 'E' + str(extrusion_diff)
                     except IndexError:
