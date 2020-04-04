@@ -449,7 +449,7 @@ class Parser:
         return merged_gcode
 
     def create_gcode_script(self, gcode):
-        self.merged_gcode_script = ''
+        self.merged_gcode_script = '; ASMBL gcode created by https://github.com/AndyEveritt/ASMBL\n'
         prev_layer = gcode[0]
         for layer in gcode:
             self.set_last_additive_tool(prev_layer)
