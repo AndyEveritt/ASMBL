@@ -200,6 +200,13 @@ class Parser:
             progress.progressValue += 1
         self.open_files(self.config)
 
+        # Fusion 360 currently only exports absolute extrusion gcode, this needs to be converted
+        # This method will not convert gcode if it is already relative
+        if progress:
+            progress.message = 'Converting additive gcode to relative positioning'
+            progress.progressValue += 1
+        self.gcode_add = self.convert_relative(self.gcode_add)
+
         if progress:
             progress.message = 'Spliting additive gcode layers'
             progress.progressValue += 1
@@ -231,6 +238,47 @@ class Parser:
 
         gcode_sub_file = open(config['InputFiles']['subtractive_gcode'], 'r')
         self.gcode_sub = gcode_sub_file.read()
+
+    def convert_relative(self, gcode_abs):
+        absolute_mode = False
+        last_tool = None
+        last_e = {}     # {'tool': last extrusion value}
+
+        lines = gcode_abs.split('\n')
+
+        gcode_rel = ''
+
+        for line in lines:
+            if line == '':
+                continue
+
+            line_start = line.split(' ')[0]
+            if line_start == ('M82'):
+                absolute_mode = True
+            elif line_start == ('M83'):
+                absolute_mode = False
+
+            if line_start[0] == 'T':
+                last_tool = line_start
+            elif line_start == 'G92':
+                extrusion_reset = line.split('E')[1]
+                last_e[last_tool] = extrusion_reset
+
+            if absolute_mode:
+                if line_start == 'G0' or line_start == 'G1':
+                    try:
+                        line_split = line.split('E')
+                        current_extrusion = line_split[1]
+                        extrusion_diff = float(current_extrusion) - float(last_e[last_tool])
+                        extrusion_diff = round(extrusion_diff, 3)
+                        last_e[last_tool] = current_extrusion
+                        line = line_split[0] + 'E' + str(extrusion_diff)
+                    except IndexError:
+                        pass
+            gcode_rel += line + '\n'
+        
+        return gcode_rel
+
 
     def split_additive_layers(self, gcode_add):
         """ Takes Simplify3D gcode and splits in by layer """
@@ -400,7 +448,7 @@ class Parser:
         return merged_gcode
 
     def create_gcode_script(self, gcode):
-        self.merged_gcode_script = ''
+        self.merged_gcode_script = '; ASMBL gcode created by https://github.com/AndyEveritt/ASMBL\n'
         prev_layer = gcode[0]
         for layer in gcode:
             self.set_last_additive_tool(prev_layer)
