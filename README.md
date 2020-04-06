@@ -210,8 +210,8 @@ Process | Usage
 
 This program separates each of the CAM operations into segments separated by local maximas in tool height (ie retracts).
 
-This is key to understanding how to CAM a model effectively. Below are guidelines but they may not work for every situation.
-Use this overview to understand what to look for when setting up the CAM operations.
+> **This is key to understanding how to CAM a model effectively. Below are guidelines but they may not work for every situation.
+> Use this overview to understand what to look for when setting up the CAM operations.**
 
 Each of these segments is then classified as either planar or non-planar.
 
