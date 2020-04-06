@@ -30,11 +30,11 @@ class AdditiveGcodeLayer:
     def get_layer_height(self, gcode):
         height = None
         lines = gcode.split('\n')
-        
+
         # Check for Simplify3D end of file code
         if lines[0] == '; layer end':
             height = inf
-        
+
         else:
             line_heights = []
             for line in lines:
@@ -46,7 +46,7 @@ class AdditiveGcodeLayer:
                 if len(line_segments) > 1:
                     line_height = float(line_segments[1].split(' ')[0])
                     line_heights.append(line_height)
-            
+
             height = min(line_heights)
 
         return height
@@ -60,7 +60,7 @@ class AdditiveGcodeLayer:
                     line = '; ' + line
                 commented_gcode += line + '\n'
         self.gcode = commented_gcode
-    
+
     def remove_park_gcode(self):
         # Fusion adds some dirty end gcode
         # Kill it with fire until they let us control the end gcode with the post processor
@@ -137,11 +137,11 @@ class CamGcodeLayer:
         for line in self.operations:
             if len(line.gcode.split('F')) > 1:
                 lines.append(line)
-        
+
         op_height = max(
             [line.layer_height for line in lines])
         return op_height
-    
+
     def get_retract_height(self):
         retract_height = max(
             [line.layer_height for line in self.operations])
@@ -167,7 +167,7 @@ class NonPlanarOperation():
         self.tool = operation[0].tool
         self.cam_layers = operation
         self.set_z_height()
-    
+
     def set_z_height(self):
         self.height = -inf
         for layer in self.cam_layers:
@@ -253,17 +253,25 @@ class Parser:
                 continue
 
             line_start = line.split(' ')[0]
+            # Check for absolute extrusion
             if line_start == ('M82'):
                 absolute_mode = True
+                line = 'M83'
+
+            # Check for relative extrusion
             elif line_start == ('M83'):
                 absolute_mode = False
 
-            if line_start[0] == 'T':
+            # Check for tool change
+            elif line_start[0] == 'T':
                 last_tool = line_start
+
+            # Check for extrusion reset
             elif line_start == 'G92':
                 extrusion_reset = line.split('E')[1]
                 last_e[last_tool] = extrusion_reset
 
+            # Convert Extrusion coordinates to relative if in absolute mode
             if absolute_mode:
                 if line_start == 'G0' or line_start == 'G1':
                     try:
@@ -276,9 +284,8 @@ class Parser:
                     except IndexError:
                         pass
             gcode_rel += line + '\n'
-        
-        return gcode_rel
 
+        return gcode_rel
 
     def split_additive_layers(self, gcode_add):
         """ Takes Simplify3D gcode and splits in by layer """
@@ -307,7 +314,7 @@ class Parser:
             gcode_add_layers.append(AdditiveGcodeLayer(layer))
 
         return gcode_add_layers
-    
+
     def find_maxima(self, numbers):
         maxima = []
         length = len(numbers)
@@ -325,7 +332,7 @@ class Parser:
                 elif prev_increasing:
                     if numbers[i] >= numbers[i-1] and numbers[i] == numbers[i+1]:
                         flat_index += 1
-                    
+
                     elif numbers[i] == numbers[i-1] and numbers[i] > numbers[i+1]:
                         mid_index = ceil(flat_index/2 + 0.5)
                         maxima.append(i - mid_index)
@@ -384,7 +391,7 @@ class Parser:
 
             for op_instance in planar_layers:
                 unordered_ops.append(op_instance)
-            
+
             if non_planar_layers:
                 non_planar_op = NonPlanarOperation(non_planar_layers)
                 unordered_ops.append(non_planar_op)
@@ -411,22 +418,22 @@ class Parser:
                     op_instance.layer_height = later_additive[-1].layer_height
 
             else:  # no later ops
-                later_additive = [layer for layer in self.gcode_add_layers[:-1] if layer.layer_height > op_instance.height]
+                later_additive = [layer for layer in self.gcode_add_layers[:-1]
+                                  if layer.layer_height > op_instance.height]
 
                 if len(later_additive) >= layer_overlap:
                     op_instance.layer_height = later_additive[layer_overlap - 1].layer_height
-                
+
                 elif len(later_additive) == 0:   # no further printing
                     # add 10 since it is unlikely that the printed layer height will exceed 10 mm
                     # but still want to place cutting after a print at the same height
                     op_instance.layer_height = op_instance.height + 10
-                
+
                 else:
                     op_instance.layer_height = later_additive[-1].layer_height
-            
+
             if op_instance.layer_height == inf:
                 raise ValueError("CAM op height can't be 'inf'")
-                
 
         # Expand out non planar layers
         expanded_ordered_operations = []
@@ -481,7 +488,7 @@ class Parser:
 
         with open(file_path, "w") as f:
             f.write(gcode)
-        
+
         f.close()
 
         try:
