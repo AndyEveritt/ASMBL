@@ -4,7 +4,7 @@
 
 ## 2D Adaptive
 
-**Uses**: Top surfacing
+> **Uses**: Top surfacing
 
 * `Tool`
   * Select/create a cutting tool with appropriate dimensions for what is installed on you ASMBL machine
@@ -27,7 +27,7 @@ Multiple surfaces at different heights can be selected with the same process. Th
 
 ## 3D Contour
 
-**Uses**: Side walls & slopes
+> **Uses**: Side walls & slopes
 
 * `Tool`
   * Select/create a cutting tool with appropriate dimensions for what is installed on you ASMBL machine
@@ -57,7 +57,7 @@ Multiple surfaces at different heights can be selected with the same process. Th
 
 ## 2D Contour
 
-**Uses**: Not sure there are any that 3D Contour doesn't cover. Here is the setup guide anyway
+> **Uses**: Can be used for vertical walls if you can't get the retracts to cooperate using 3D contour
 
 * `Tool`
   * Select/create a cutting tool with appropriate dimensions for what is installed on you ASMBL machine
@@ -83,6 +83,9 @@ Multiple surfaces at different heights can be selected with the same process. Th
 <img src="images/2d_contour_undercuts.png" width=480>
 
 # Non-planar Operations
+
+To make an operation be considered as Non-planar, simply rename the operation in the subtractive setup so the name begins
+with `NP_`
 
 Non-planar operations can be configured similarly to the planar operations described above. More care is required when creating the toolpaths as is it easy to accidentally cut into the part.
 

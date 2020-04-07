@@ -152,7 +152,7 @@ class CamGcodeLayer:
         max_height = self.get_max_z_height()
         min_height = self.get_min_z_height()
 
-        if (max_height - min_height) > (threshold + 0.0001):
+        if self.name[1:4] == 'NP_':
             self.height = max_height
             self.planar = False
 
@@ -421,13 +421,13 @@ class Parser:
                 later_additive = [layer for layer in self.gcode_add_layers[:-1]
                                   if layer.layer_height > op_instance.height]
 
-                if len(later_additive) >= layer_overlap:
-                    op_instance.layer_height = later_additive[layer_overlap - 1].layer_height
-
-                elif len(later_additive) == 0:   # no further printing
+                if len(later_additive) == 0:   # no further printing
                     # add 10 since it is unlikely that the printed layer height will exceed 10 mm
                     # but still want to place cutting after a print at the same height
                     op_instance.layer_height = op_instance.height + 10
+
+                elif len(later_additive) >= layer_overlap:
+                    op_instance.layer_height = later_additive[layer_overlap - 1].layer_height
 
                 else:
                     op_instance.layer_height = later_additive[-1].layer_height
