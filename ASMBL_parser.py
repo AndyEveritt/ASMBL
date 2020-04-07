@@ -152,7 +152,7 @@ class CamGcodeLayer:
         max_height = self.get_max_z_height()
         min_height = self.get_min_z_height()
 
-        if (max_height - min_height) > (threshold + 0.0001):
+        if self.name[1:4] == 'NP_':
             self.height = max_height
             self.planar = False
 
