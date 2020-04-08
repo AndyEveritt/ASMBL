@@ -2,7 +2,11 @@
 
 # Planar
 
-## 2D Adaptive
+The follow page details the settings to set for the main operation types used for ASMBL. Most models can be setup using a single `3D Contour` and `2D Adaptive Clearing`. Feature specific CAM operations (such as smoothing a fillet) can be done with additional operations if the model requires it.
+
+This is a guide that I have found to work in most situations, it may not always be correct.
+
+## 2D Adaptive Clearing
 
 > **Uses**: Top surfacing
 
@@ -11,8 +15,8 @@
 * `Geometry`
   * Select the surface you would like to top surface
 * `Heights`
-  * Set the `Clearance Height`, `Retract Height`, and `Feed Height` equal
-    * These must be equal for all processes
+  * Set the `Clearance Height` and `Retract Height` equal height
+    * Exact height doesn't matter, just ensure the tool will clear the print.
 * `Passes`
   * Set `Optimal Load` to ~0.2-0.8 mm
   * Set `Direction` to `Conventional`
@@ -32,28 +36,35 @@ Multiple surfaces at different heights can be selected with the same process. Th
 * `Tool`
   * Select/create a cutting tool with appropriate dimensions for what is installed on you ASMBL machine
 * `Geometry`
-  * Select the boundry contours for the sides you would like to cut (everything in the boundry will be cut)
-  * You can specify an out and inner boundary to only cut a certain region
-  * Play with the settings here to make it do what you want
-  * If you want to machine everything:
+  * Recommended settings to machine everything:
     * Set `Machining Boundary` to `Silhouette`
     * Set `Tool Containment` to `Tool outside boundary`
+  * If you want to do more complicated CAM operations you might want to select the boundry contours for the sides you would like to cut (everything in the boundry will be cut)
+    * You can specify an out and inner boundary to only cut a certain region
+    * Play with the settings here to make it do what you want
 * `Heights`
-  * Set the `Clearance Height` and `Retract Height` equal
-    * These must be equal for all processes
-  * Set the `Top Height` and `Bottom Height` appropriately for the desired process
-    * ie top and bottom of the surface
+  * Set the `Clearance Height` and `Retract Height` the same height
+    * Exact height doesn't matter, just ensure the tool will clear the print.
+  * The `Top Height` and `Bottom Height` can normally be left but you may want to change them for your part:
+    * ie if you have a chamfer on the bottom face; you can set the the bottom height to the top edge of the chamfer
 * `Passes`
   * Set `Direction` to `Conventional`
-  * Set `Maximum Stepdown` to be equal to ~0.5-2 layers
+  * Set `Maximum Stepdown` to be equal to ~2 layers
+    * Recommend large stepdown for vertical faces and a small stepdown if you want to interpolate a slope to reduce staircase effect.
+  * Set `Order By Depth` to `True`
   * Disable `Stock to Leave`
 * `Linking`
   * Set `Maximum Stay Down Distance` to `0` mm
-  * Set `Ramp Type` to `Profile`
+  * Set `Ramp Type` to `Plunge`
+  * Set `Transition Type` to `No contact`
 
-3D Contour can be used for most none flat surfaces that have nothing above them. They are good for quickly CAM'ing a large number of faces.
+3D Contour can be used for most none flat surfaces. They are good for quickly CAM'ing a large number of faces.
 
 <img src="images/3d_contour_1.png" width="480">
+
+If a face has something above it, then it can be CAM'd by selecting that face in as below:
+
+<img src="images/fusion_cam_contour_select_face.png" width="160">
 
 ## 2D Contour
 
@@ -64,8 +75,8 @@ Multiple surfaces at different heights can be selected with the same process. Th
 * `Geometry`
   * Select all the contours for the sides you would like to cut
 * `Heights`
-  * Set the `Clearance Height`, `Retract Height`, and `Feed Height` equal
-    * These must be equal for all processes
+  * Set the `Clearance Height`, `Retract Height`, and `Feed Height` equal height
+    * Exact height doesn't matter, just ensure the tool will clear the print.
   * Set the `Top Height` and `Bottom Height` appropriately for the desired process
     * ie top and bottom of the surface
 * `Passes`

@@ -121,6 +121,8 @@ The additive gcode can be setup in various ways.
 * Using Fusion360 for the complete workflow (recommended)
 * Using Simplify3D (or PrusaSlicer if you want to make a profile) to generate the FFF gcode and Fusion to generate the CAM gcode.
 
+> **DO NOT TURN OFF THE RAFT UNLESS YOU KNOW WHAT YOU ARE DOING...IT IS VERY EASY TO CUT INTO THE BED AND BREAK THE TOOL**
+
 ### Fusion360
 
 First you need to create an offset of your model, this will control how much cut-in you have.
@@ -250,6 +252,10 @@ The same operation with different `linking` settings can result in the following
 
 #### Tool Config
 
+You can import our tool config by opening the `Tool Library` then right clicking on either the Document, `Cloud`, or `Local` then `Import Tool Library`. The library to import is located in this repo in `settings`/`ASMBL.tools`
+
+<img src="docs/usage/images/fusion_cam_tool_import.png" width=480>
+
 When selecting the tool you must renumber the tool to match the tool number on your printer.
 
 A `Cutting Feedrate` of 500 mm/min works well.
@@ -258,17 +264,29 @@ A `Cutting Feedrate` of 500 mm/min works well.
 
 #### Operation Setup
 
+The CAM operations can be created using these buttons in the `Milling` Toolbar
+
+<img src="docs/usage/images/fusion_cam_operations.png" width=480>
+
 Full setup details for operations can be found here: [CAM Operation Setup](docs/usage/cam_operations.md)
 
 ## Post Processing
 
 ### Fusion Add-in
 
+* Regenerate the additive setup
+* Regenerate the subtractive setup
+  *  This offsets the CAM operation Z height equal to the raft height.
 * Click on the `ASMBL` tab along the top navigation bar
 * Click `Post Process`
   * If all the toolpaths have not been previously generated or are out of date, you can tick the box to re generate all toolpaths
     * This currently has a bug if the additive toolpath isn't the last to generate where the progress bar will not complete. If this happens just close the progress bar are rerun the post process command
-  * Set the remainder of the settings depending on your design by following the tooltips when hovering over them.
+  * The default settings are auto filled.
+    * Layer overlap is an important setting
+      * An overlap > 0 will use the side of the cutter instead of the tip, this can give a better finish to walls. If there are no overhangs, recommended to use `2`.
+      * However this can cause issues if machining overhangs, in which case set the overlap to 0
+    * Layer Dropdown can also affect finish
+      * This will lower the z height of all the CAM operations by this value, it can be used to make the cutter tip locate in the middle of a layer instead of between 2 layers which can give a better finish; but if you want Z accuracy, leave it at 0.
   * Click `OK`
 * The output gcode will be saved in `~/ASMBL/output/`
   * If the file name already exists, it will be overwritten without warning.
@@ -296,11 +314,11 @@ Update the `config.json` so that the following settings are correct for your pro
         "subtractive_gcode": "path to Fusion360 CAM .gcode file"
     },
     "Printer": {
-        "bed_centre_x": "mm from origin to bed centre in x axis",
-        "bed_centre_y": "mm from origin to bed centre in y axis"
+        "bed_centre_x": "mm from origin to bed centre in x axis (150)",
+        "bed_centre_y": "mm from origin to bed centre in y axis (100)"
     },
     "PrintSettings": {
-        "raft_height": "Height of the top layer of the raft"
+        "raft_height": "Height of the top layer of the raft (2.133)"
     },
     "CamSettings": {
         "layer_overlap": "How many layers the tip of the cutter should be lower than the layers being cut",
