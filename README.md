@@ -121,7 +121,7 @@ The additive gcode can be setup in various ways.
 * Using Fusion360 for the complete workflow (recommended)
 * Using Simplify3D (or PrusaSlicer if you want to make a profile) to generate the FFF gcode and Fusion to generate the CAM gcode.
 
-> **DO NOT TURN OFF THE RAFT UNLESS YOU KNOW WHAT YOU ARE DOING...IT IS VERY EASY TO CUT INTO THE BED AND BREAK THE TOOL**
+> **<font color="red">DO NOT TURN OFF THE RAFT</font> UNLESS YOU KNOW WHAT YOU ARE DOING...IT IS VERY EASY TO CUT INTO THE BED AND BREAK THE TOOL**
 
 ### Fusion360
 
@@ -130,10 +130,12 @@ First you need to create an offset of your model, this will control how much cut
 * Make a duplicate of the model body(s).
   * Select the body from the Browser menu on the left and `Ctrl+C`, `Ctrl+V`
   * Make sure both bodies perfectly overlaid.
+  * Both bodies should either be both inside or both outside a component. (Weird graphics happen otherwise).
 * Offset all the faces on the new body that you wish to machine.
   * Hide the original body to make selecting faces easier.
   * An offset amount of ~0.2-0.3 mm works well in my testing.
   * You do not want to offset any face you will not be able to machine, **ie the base**
+* Once you are done, hide the offset body and show the original body.
 
 <img src="docs/usage/images/fusion_fff_offset.png" width=480>
 

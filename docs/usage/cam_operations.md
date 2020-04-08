@@ -10,6 +10,8 @@ This is a guide that I have found to work in most situations, it may not always 
 
 > **Uses**: Top surfacing
 
+<img src="images/2d_adaptive_selection.png" width=480>
+
 * `Tool`
   * Select/create a cutting tool with appropriate dimensions for what is installed on you ASMBL machine
 * `Geometry`
@@ -24,14 +26,15 @@ This is a guide that I have found to work in most situations, it may not always 
 * `Linking`
   * Set `Ramp Type` to `Plunge`
 
-
 Multiple surfaces at different heights can be selected with the same process. This can help reduce setup time in Fusion
-
-<img src="images/2d_adaptive_selection.png" width=480>
 
 ## 3D Contour
 
 > **Uses**: Side walls & slopes
+
+3D Contour can be used for most none flat surfaces. They are good for quickly CAM'ing a large number of faces.
+
+<img src="images/3d_contour_1.png" width="480">
 
 * `Tool`
   * Select/create a cutting tool with appropriate dimensions for what is installed on you ASMBL machine
@@ -58,13 +61,9 @@ Multiple surfaces at different heights can be selected with the same process. Th
   * Set `Ramp Type` to `Plunge`
   * Set `Transition Type` to `No contact`
 
-3D Contour can be used for most none flat surfaces. They are good for quickly CAM'ing a large number of faces.
+If a face has something above it, then it can be CAM'd by selecting that face as below (You may need to create a separate operation for this to work):
 
-<img src="images/3d_contour_1.png" width="480">
-
-If a face has something above it, then it can be CAM'd by selecting that face in as below:
-
-<img src="images/fusion_cam_contour_select_face.png" width="160">
+<img src="images/fusion_cam_contour_select_face.png" width="480">
 
 ## 2D Contour
 
