@@ -65,6 +65,8 @@ If a face has something above it, then it can be CAM'd by selecting that face as
 
 <img src="images/fusion_cam_contour_select_face.png" width="480">
 
+Angled overhangs can be CAM'd using offset faces. See the example [here](../../examples/Case.f3d) for how that can be setup.
+
 ## 2D Contour
 
 > **Uses**: Can be used for vertical walls if you can't get the retracts to cooperate using 3D contour
@@ -106,6 +108,6 @@ Some non-planar operations that have been tested to work are:
 * Spiral
 * Scallop
 
-An example Fusion setup can be found [here](../../CAD/Spinner_Demo.f3d)
+An example Fusion setup can be found [here](../../examples/Spinner_Demo.f3d)
 
 <img src="images/fusion_cam_nonplanar.png" width=480>
