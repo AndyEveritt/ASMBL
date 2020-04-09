@@ -178,6 +178,54 @@ function onSection() {
   }
 }
 
+/**
+  Returns the string id for the specified movement. Returns the movement id as
+  a string if unknown.
+*/
+function getMovementStringId(movement, jet) {
+  switch (movement) {
+  case MOVEMENT_RAPID:
+    return "rapid";
+  case MOVEMENT_LEAD_IN:
+    return "lead in";
+  case MOVEMENT_CUTTING:
+    return "cutting";
+  case MOVEMENT_LEAD_OUT:
+    return "lead out";
+  case MOVEMENT_LINK_TRANSITION:
+    return !jet ? "transition" : "bridging";
+  case MOVEMENT_LINK_DIRECT:
+    return "direct";
+  case MOVEMENT_RAMP_HELIX:
+    return !jet ? "helix ramp" : "circular pierce";
+  case MOVEMENT_RAMP_PROFILE:
+    return !jet ? "profile ramp" : "profile pierce";
+  case MOVEMENT_RAMP_ZIG_ZAG:
+    return !jet ? "zigzag ramp" : "linear pierce";
+  case MOVEMENT_RAMP:
+    return !jet ? "ramp" : "pierce";
+  case MOVEMENT_PLUNGE:
+    return !jet ? "plunge" : "pierce";
+  case MOVEMENT_PREDRILL:
+    return "predrill";
+  case MOVEMENT_EXTENDED:
+    return "extended";
+  case MOVEMENT_REDUCED:
+    return "reduced";
+  case MOVEMENT_FINISH_CUTTING:
+    return "finish cut";
+  case MOVEMENT_HIGH_FEED:
+    return "high feed";
+  default:
+    return String(movement);
+  }
+}
+
+function onMovement(movement) {
+  var jet = tool.isJetTool && tool.isJetTool();
+  writeComment(getMovementStringId(movement, jet))
+}
+
 function onDwell(seconds) {
   if (seconds > 99999.999) {
     warning(localize("Dwelling time is out of range."));
