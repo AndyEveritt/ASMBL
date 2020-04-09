@@ -253,7 +253,7 @@ In this operation the tool retracts after every layer. It will be properly segme
 
 <img src="docs/usage/images/fusion_cam_good_retract.png" width=480>
 
-The same operation with different `linking` settings can result in the following. 2 of the layers do not retract between them, this will cause those layers to be treated as non-planar and due to the geometry of the part, it is likely the tool body will collide with the part during printing.
+The same operation with different `linking` settings can result in the following. 2 of the layers do not retract between them, this will cause those layers to be treated as a single segment and it will cut before the part has been printed.
 
 <img src="docs/usage/images/fusion_cam_bad_retract.png" width=480>
 
