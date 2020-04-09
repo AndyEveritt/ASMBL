@@ -127,10 +127,18 @@ The additive gcode can be setup in various ways.
 
 First you need to create an offset of your model, this will control how much cut-in you have.
 
+* Open you Fusion 360 file, or `.step` in Fusion 360.
+* Turn on `Capture Design History` if it is not already on.
+
+<img src="docs/usage/images/fusion_design_history.png" width=240>
+
 * Make a duplicate of the model body(s).
   * Select the body from the Browser menu on the left and `Ctrl+C`, `Ctrl+V`
   * Make sure both bodies perfectly overlaid.
-  * Both bodies should either be both inside or both outside a component. (Weird graphics happen otherwise).
+  * Both bodies should be outside a component if one exists. (Weird graphics happen otherwise).
+
+<img src="docs/usage/images/fusion_component_body.png" width=240>
+
 * Offset all the faces on the new body that you wish to machine.
   * Hide the original body to make selecting faces easier.
   * An offset amount of ~0.2-0.3 mm works well in my testing.
@@ -202,9 +210,12 @@ The CAMing proceedures for ASMBL can be configured with the following processes:
 
 Process | Usage
 ------- | -----
-2D Contour | Used for vertical side walls of parts
+3D Contour | Used for vertical & close to vertical side walls (including chamfers & filets).
 2D Adaptive | Used for top surfacing
-3D Contour | Used for vertical & close to vertical side walls (including chamfers & filets). May not be able to cut internal features (ie walls with a roof over them)
+2D Contour | Used for vertical side walls of parts
+Other 3D operations | Can be used for non planar operations **if you know what you are doing** (it is easy to break stuff, be careful)
+
+See [Operation Setup](#operation-setup) for more details.
 
 <br>
 <br>
