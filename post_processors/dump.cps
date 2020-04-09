@@ -401,7 +401,7 @@ function onMovement(movement) {
   case MOVEMENT_EXTENDED:
     id = "MOVEMENT_EXTENDED";
     break;
-  case MOVEMENT_REDUCED:
+  case MOVEMENT_REDUCED: 
     id = "MOVEMENT_REDUCED";
     break;
   case MOVEMENT_HIGH_FEED:

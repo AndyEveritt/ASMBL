@@ -4,7 +4,7 @@ import traceback
 import time
 import os
 
-from ..ASMBL_parser import Parser
+from ..src.ASMBL_parser import Parser
 
 # Global list to keep all event handlers in scope.
 # This is only needed with Python.

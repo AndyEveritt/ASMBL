@@ -1,11 +1,12 @@
 import sys
 import os
+import re
 from math import (
     inf,
     ceil,
     floor,
 )
-import re
+import src.utils as utils
 
 
 class AdditiveGcodeLayer:
@@ -70,32 +71,10 @@ class AdditiveGcodeLayer:
 class CamGcodeLine:
     """ Stores a single line of fusion360 CAM gcode. """
 
-    def __init__(self, gcode, offset):
-        self.gcode = self.offset_gcode(gcode, offset)
+    def __init__(self, gcode, offset, line_type):
+        self.gcode = utils.offset_gcode(gcode, offset)
         self.layer_height = self.get_layer_height(self.gcode)
-
-    def offset_gcode(self, gcode, offset):
-        gcode_segments = gcode.split(' ')
-        offset_gcode = ''
-        for gcode_segment in gcode_segments:
-            if gcode_segment[0] == 'X':
-                x_pos = float(gcode_segment[1:])
-                x_pos += offset[0]
-                gcode_segment = gcode_segment[0] + str(x_pos)
-
-            elif gcode_segment[0] == 'Y':
-                y_pos = float(gcode_segment[1:])
-                y_pos += offset[1]
-                gcode_segment = gcode_segment[0] + str(y_pos)
-
-            elif gcode_segment[0] == 'Z':
-                z_pos = float(gcode_segment[1:])
-                z_pos += offset[2]
-                gcode_segment = gcode_segment[0] + str(z_pos)
-
-            offset_gcode += ' ' + gcode_segment
-
-        return offset_gcode[1:]
+        self.type = line_type
 
     def get_layer_height(self, gcode):
         """Return the layer height of single line of gcode."""
@@ -126,20 +105,27 @@ class CamGcodeLayer:
 
         return gcode
 
+    def detect_missing_retract(self, operations):
+        # Sometimes Fusion optimises out the retractions, this detects when that happens
+        cutting_count = 0
+        cutting = False
+
+        for line in operations:
+            if line.type == 'cutting' and cutting is False:
+                cutting_count += 1
+                cutting = True
+            elif line.type != 'cutting':
+                cutting = False
+
     def get_min_z_height(self):
         op_height = min(
-            [line.layer_height for line in self.operations])
+            [line.layer_height for line in self.operations if line.type == 'cutting'])
         return op_height
 
     def get_max_z_height(self):
-        lines = []
         # Filter out retracts, only care about max Z height of cutting ops
-        for line in self.operations:
-            if len(line.gcode.split('F')) > 1:
-                lines.append(line)
-
         op_height = max(
-            [line.layer_height for line in lines])
+            [line.layer_height for line in self.operations if line.type == 'cutting'])
         return op_height
 
     def get_retract_height(self):
@@ -147,12 +133,11 @@ class CamGcodeLayer:
             [line.layer_height for line in self.operations])
         return retract_height
 
-    def set_z_height(self, threshold=0.2):
-        # Default threshold is the default vertical lead-in radius in Fusion 360
+    def set_z_height(self, threshold=0.05):
         max_height = self.get_max_z_height()
         min_height = self.get_min_z_height()
 
-        if self.name[1:4] == 'NP_':
+        if round(max_height - min_height, 6) > threshold:
             self.height = max_height
             self.planar = False
 
@@ -205,7 +190,7 @@ class Parser:
         if progress:
             progress.message = 'Converting additive gcode to relative positioning'
             progress.progressValue += 1
-        self.gcode_add = self.convert_relative(self.gcode_add)
+        self.gcode_add = utils.convert_relative(self.gcode_add)
 
         if progress:
             progress.message = 'Spliting additive gcode layers'
@@ -239,54 +224,6 @@ class Parser:
         gcode_sub_file = open(config['InputFiles']['subtractive_gcode'], 'r')
         self.gcode_sub = gcode_sub_file.read()
 
-    def convert_relative(self, gcode_abs):
-        absolute_mode = False
-        last_tool = None
-        last_e = {}     # {'tool': last extrusion value}
-
-        lines = gcode_abs.split('\n')
-
-        gcode_rel = ''
-
-        for line in lines:
-            if line == '':
-                continue
-
-            line_start = line.split(' ')[0]
-            # Check for absolute extrusion
-            if line_start == ('M82'):
-                absolute_mode = True
-                line = 'M83'
-
-            # Check for relative extrusion
-            elif line_start == ('M83'):
-                absolute_mode = False
-
-            # Check for tool change
-            elif line_start[0] == 'T':
-                last_tool = line_start
-
-            # Check for extrusion reset
-            elif line_start == 'G92':
-                extrusion_reset = line.split('E')[1]
-                last_e[last_tool] = extrusion_reset
-
-            # Convert Extrusion coordinates to relative if in absolute mode
-            if absolute_mode:
-                if line_start == 'G0' or line_start == 'G1':
-                    try:
-                        line_split = line.split('E')
-                        current_extrusion = line_split[1]
-                        extrusion_diff = float(current_extrusion) - float(last_e[last_tool])
-                        extrusion_diff = round(extrusion_diff, 3)
-                        last_e[last_tool] = current_extrusion
-                        line = line_split[0] + 'E' + str(extrusion_diff)
-                    except IndexError:
-                        pass
-            gcode_rel += line + '\n'
-
-        return gcode_rel
-
     def split_additive_layers(self, gcode_add):
         """ Takes Simplify3D gcode and splits in by layer """
         tmp_list = re.split('(; layer)', gcode_add)
@@ -315,32 +252,6 @@ class Parser:
 
         return gcode_add_layers
 
-    def find_maxima(self, numbers):
-        maxima = []
-        length = len(numbers)
-        flat_index = 0
-        prev_increasing = False
-        if length > 3:
-            for i in range(1, length-1):
-                if numbers[i] > numbers[i-1]:
-                    flat_index = 0
-                    prev_increasing = True
-                    if numbers[i] > numbers[i+1]:
-                        maxima.append(i)
-                        prev_increasing = False
-
-                elif prev_increasing:
-                    if numbers[i] >= numbers[i-1] and numbers[i] == numbers[i+1]:
-                        flat_index += 1
-
-                    elif numbers[i] == numbers[i-1] and numbers[i] > numbers[i+1]:
-                        mid_index = ceil(flat_index/2 + 0.5)
-                        maxima.append(i - mid_index)
-                        flat_index = 0
-                        prev_increasing = False
-
-        return maxima
-
     def split_cam_operations(self, gcode_sub):
         """ Takes fusion360 CAM gcode and splits the operations by execution height """
         tmp_operation_list = gcode_sub.split('\n\n')
@@ -349,18 +260,24 @@ class Parser:
 
         for i, operation in enumerate(tmp_operation_list):
 
-            lines = operation.split('\n')
-            name = lines.pop(0)
-            tool = lines.pop(0)
-            lines = [line for line in lines if line != '']
+            unlabelled_lines = operation.split('\n')
+            name = unlabelled_lines.pop(0)
+            tool = unlabelled_lines.pop(0)
+            unlabelled_lines = [line for line in unlabelled_lines if line != '']
 
             operations.append([])
 
             # extract information from string
-            lines = [CamGcodeLine(line, self.offset) for line in lines]
+            lines = []
+            line_type = None
+            for line in unlabelled_lines:
+                if line.startswith('(type: '):
+                    line_type = line[7:].strip(')')
+                else:
+                    lines.append(CamGcodeLine(line, self.offset, line_type))
 
             line_heights = [line.layer_height for line in lines]
-            local_peaks = self.find_maxima(line_heights)
+            local_peaks = utils.find_maxima(line_heights)
 
             if len(local_peaks) > 0:
                 op_lines = lines[0: local_peaks[0]+1]

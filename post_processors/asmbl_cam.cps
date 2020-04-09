@@ -213,7 +213,7 @@ function getMovementStringId(movement, jet) {
   case MOVEMENT_REDUCED:
     return "reduced";
   case MOVEMENT_FINISH_CUTTING:
-    return "finish cut";
+    return "cutting";
   case MOVEMENT_HIGH_FEED:
     return "high feed";
   default:
@@ -223,7 +223,7 @@ function getMovementStringId(movement, jet) {
 
 function onMovement(movement) {
   var jet = tool.isJetTool && tool.isJetTool();
-  writeComment(getMovementStringId(movement, jet))
+  writeComment('type: ' + getMovementStringId(movement, jet))
 }
 
 function onDwell(seconds) {

@@ -1,4 +1,4 @@
-from ASMBL_parser import Parser
+from src.ASMBL_parser import Parser
 
 import json
 import argparse
