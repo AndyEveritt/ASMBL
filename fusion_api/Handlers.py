@@ -265,7 +265,17 @@ class PostProcessExecuteHandler(adsk.core.CommandEventHandler):
                     ui.messageBox('Posting timed out')
                     return
                 pass    # wait until files exist
-            time.sleep(1)
+            checkpoint = time.time()
+            while True:
+                if time.time() > checkpoint + 10:
+                    ui.messageBox('Permission Error timed out')
+                    return
+                try:
+                    open(tmpAdditive)
+                    open(tmpSubtractive)
+                    break
+                except PermissionError:
+                    continue
         except:
             ui.messageBox('Failed posting toolpaths:\n{}'.format(traceback.format_exc()))
             return

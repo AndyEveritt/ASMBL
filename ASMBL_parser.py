@@ -383,6 +383,8 @@ class Parser:
         for operation in operations:
             if operation:
                 for op_instance in operation:
+                    # Finds the min and max z height of the where the tool is "cutting" (ie a Feedrate is specified)
+                    # If operation name starts with 'NP_' then operation is classified as 'Non-Planar'
                     op_instance.set_z_height()
 
         for operation in operations:
