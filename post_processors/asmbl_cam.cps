@@ -134,6 +134,13 @@ function onSection() {
       writeComment(comment);
     }
   }
+
+  if (hasParameter("operation-strategy")) {
+    var strategy = getParameter("operation-strategy");
+    if (strategy) {
+      writeComment('strategy: ' + strategy);
+    }
+  }
   
   writeBlock("T" + toolFormat.format(tool.number));
 
