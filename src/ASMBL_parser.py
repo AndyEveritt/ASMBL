@@ -81,13 +81,50 @@ class CamGcodeLine:
         return float(gcode.split('Z')[1].split(' ')[0])
 
 
+class CamGcodeSegment:
+    """ Stores gcode lines for a sequence of a specific movement type """
+
+    def __init__(self, segment_type=None, lines=[]):
+        self.type = segment_type
+        self.lines = lines
+        self.planar = None
+        self.height = None
+
+        if self.type == 'cutting':
+            self.set_z_height()
+
+    def get_min_z_height(self):
+        op_height = min(
+            [line.layer_height for line in self.lines])
+        return op_height
+
+    def get_max_z_height(self):
+        # Filter out retracts, only care about max Z height of cutting ops
+        op_height = max(
+            [line.layer_height for line in self.lines])
+        return op_height
+
+    def set_z_height(self, threshold=0.05):
+        max_height = self.get_max_z_height()
+        min_height = self.get_min_z_height()
+
+        if round(max_height - min_height, 6) > threshold:
+            self.height = max_height
+            self.planar = False
+
+        else:
+            self.height = min_height
+            self.planar = True
+
+
 class CamGcodeLayer:
     """ Stores all the CAM operations in a specific layer. """
 
-    def __init__(self, operations, name=None, tool=None, height=None):
+    def __init__(self, operations, name=None, strategy=None, tool=None, height=None):
         self.height = height
         self.operations = operations
         self.name = name
+        self.strategy = strategy
         self.tool = tool
         self.planar = None
 
@@ -104,18 +141,6 @@ class CamGcodeLayer:
             gcode += op.gcode + '\n'
 
         return gcode
-
-    def detect_missing_retract(self, operations):
-        # Sometimes Fusion optimises out the retractions, this detects when that happens
-        cutting_count = 0
-        cutting = False
-
-        for line in operations:
-            if line.type == 'cutting' and cutting is False:
-                cutting_count += 1
-                cutting = True
-            elif line.type != 'cutting':
-                cutting = False
 
     def get_min_z_height(self):
         op_height = min(
@@ -252,6 +277,44 @@ class Parser:
 
         return gcode_add_layers
 
+    def assign_cam_line_type(self, unlabelled_lines):
+        """ extract type information from string, returns a list of CamGcodeLine's """
+        lines = []
+        line_type = None
+        for line in unlabelled_lines:
+            if line.startswith('(type: '):
+                line_type = line[7:].strip(')')
+            else:
+                lines.append(CamGcodeLine(line, self.offset, line_type))
+
+        return lines
+
+    def group_cam_lines(self, lines):
+        """
+        Group consequetive lines of the same type into segments
+        Returns a list of segments
+        """
+        segments = []
+        segment_lines = [lines[0]]
+        for i, line in enumerate(lines[1:]):
+            if line.type != lines[i].type:
+                segments.append(CamGcodeSegment(lines[i].type, segment_lines))
+                segment_lines = [line]
+            else:
+                segment_lines.append(line)
+
+        segments.append(CamGcodeSegment(lines[-1].type, segment_lines))
+
+        return segments
+
+    def group_cam_segments(self, segments):
+        segment_groups = []
+        segment_group
+        cutting_height = None
+        for i, segment in enumerate(segments):
+            if segment.type == 'cutting' and segment.height == cutting_height:
+                
+
     def split_cam_operations(self, gcode_sub):
         """ Takes fusion360 CAM gcode and splits the operations by execution height """
         tmp_operation_list = gcode_sub.split('\n\n')
@@ -259,38 +322,32 @@ class Parser:
         operations = []
 
         for i, operation in enumerate(tmp_operation_list):
-
             unlabelled_lines = operation.split('\n')
             name = unlabelled_lines.pop(0)
+            strategy = unlabelled_lines.pop(0)[11:].strip(')')
             tool = unlabelled_lines.pop(0)
             unlabelled_lines = [line for line in unlabelled_lines if line != '']
 
             operations.append([])
 
-            # extract information from string
-            lines = []
-            line_type = None
-            for line in unlabelled_lines:
-                if line.startswith('(type: '):
-                    line_type = line[7:].strip(')')
-                else:
-                    lines.append(CamGcodeLine(line, self.offset, line_type))
+            lines = self.assign_cam_line_type(unlabelled_lines)
+            segments = self.group_cam_lines(lines)
 
             line_heights = [line.layer_height for line in lines]
             local_peaks = utils.find_maxima(line_heights)
 
             if len(local_peaks) > 0:
                 op_lines = lines[0: local_peaks[0]+1]
-                operations[i].append(CamGcodeLayer(op_lines, name, tool))
+                operations[i].append(CamGcodeLayer(op_lines, name, strategy, tool))
 
                 for index, peak in enumerate(local_peaks[:-1]):
                     op_lines = lines[local_peaks[index]: local_peaks[index+1]+1]
-                    operations[i].append(CamGcodeLayer(op_lines, name, tool))
+                    operations[i].append(CamGcodeLayer(op_lines, name, strategy, tool))
 
                 op_lines = lines[local_peaks[-1]:]
-                operations[i].append(CamGcodeLayer(op_lines, name, tool))
+                operations[i].append(CamGcodeLayer(op_lines, name, strategy, tool))
             else:
-                operations[i].append(CamGcodeLayer(lines, name, tool))
+                operations[i].append(CamGcodeLayer(lines, name, strategy, tool))
 
         return operations
 

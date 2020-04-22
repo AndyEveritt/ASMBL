@@ -111,7 +111,7 @@ To modify the source code follow the guide here: [Standalone Installation](docs/
 
 ## Material Choice
 
-A details on materials that have been tested can be found [here](docs/materials.md).
+A details on materials that have been tested can be found [here](docs/usage/materials.md).
 
 <br>
 
