@@ -7,169 +7,13 @@ from math import (
     floor,
 )
 import src.utils as utils
-
-
-class AdditiveGcodeLayer:
-    """ Stores a complete layer of gcode produced in Simplify3d """
-
-    def __init__(self, gcode, name=None, layer_height=None):
-        self.gcode = gcode
-        self.name = name
-        self.layer_height = layer_height
-
-        self.remove_park_gcode()
-
-        if name is None:
-            self.name = self.get_name(self.gcode)
-
-        if layer_height is None:
-            self.layer_height = self.get_layer_height(self.gcode)
-
-    def get_name(self, gcode):
-        return gcode.split(',')[0][2:]
-
-    def get_layer_height(self, gcode):
-        height = None
-        lines = gcode.split('\n')
-
-        # Check for Simplify3D end of file code
-        if lines[0] == '; layer end':
-            height = inf
-
-        else:
-            line_heights = []
-            for line in lines:
-                if line == '':
-                    continue
-                if line[0] == ';':
-                    continue
-                line_segments = line.split('Z')
-                if len(line_segments) > 1:
-                    line_height = float(line_segments[1].split(' ')[0])
-                    line_heights.append(line_height)
-
-            height = min(line_heights)
-
-        return height
-
-    def comment_all_gcode(self):
-        commented_gcode = ''
-        lines = self.gcode.split('\n')
-        for line in lines:
-            if line != '':
-                if line[0] != ';':
-                    line = '; ' + line
-                commented_gcode += line + '\n'
-        self.gcode = commented_gcode
-
-    def remove_park_gcode(self):
-        # Fusion adds some dirty end gcode
-        # Kill it with fire until they let us control the end gcode with the post processor
-        self.gcode = self.gcode.split('; move to park position')[0]
-
-
-class CamGcodeLine:
-    """ Stores a single line of fusion360 CAM gcode. """
-
-    def __init__(self, gcode, offset, line_type):
-        self.gcode = utils.offset_gcode(gcode, offset)
-        self.layer_height = self.get_layer_height(self.gcode)
-        self.type = line_type
-
-    def get_layer_height(self, gcode):
-        """Return the layer height of single line of gcode."""
-        return float(gcode.split('Z')[1].split(' ')[0])
-
-
-class CamGcodeSegment:
-    """ Stores gcode lines for a sequence of a specific movement type """
-
-    def __init__(self, index, lines, segment_type):
-        self.type = segment_type
-        self.lines = lines
-        self.index = index
-        self.planar = None
-        self.height = None
-
-        if self.type == 'cutting':
-            self.set_z_height()
-
-    def get_min_z_height(self):
-        op_height = min(
-            [line.layer_height for line in self.lines])
-        return op_height
-
-    def get_max_z_height(self):
-        # Filter out retracts, only care about max Z height of cutting ops
-        op_height = max(
-            [line.layer_height for line in self.lines])
-        return op_height
-
-    def set_z_height(self, threshold=0.05):
-        max_height = self.get_max_z_height()
-        min_height = self.get_min_z_height()
-
-        if round(max_height - min_height, 6) > threshold:
-            self.height = max_height
-            self.planar = False
-
-        else:
-            self.height = min_height
-            self.planar = True
-
-
-class CamGcodeLayer:
-    """ Stores all the CAM operations in a specific layer. """
-
-    def __init__(self, segments, name=None, strategy=None, tool=None, cutting_height=None):
-        self.segments = segments
-        self.name = name
-        self.strategy = strategy
-        self.tool = tool
-        self.planar = None
-        self.cutting_height = cutting_height
-        self.gcode = None
-
-        if self.segments:
-            self.set_cutting_height()
-            self.set_planar()
-            # self.gcode = self.parse_gcode(self.operations)
-
-        self.layer_height = None  # height to print to before running the operation
-
-    def parse_gcode(self, operations):
-        """ Combines the gcode lines from all the operations into a single string """
-        gcode = ''
-
-        for op in operations:
-            gcode += op.gcode + '\n'
-
-        return gcode
-
-    def set_cutting_height(self):
-        self.cutting_height = max(
-            [segment.height for segment in self.segments if segment.type == 'cutting'])
-
-    def set_planar(self):
-        non_planar_segments = [segment for segment in self.segments if segment.planar is False]
-        if len(non_planar_segments) > 0:
-            self.planar = False
-        else:
-            self.planar = True
-
-
-class NonPlanarOperation():
-    def __init__(self, operation):
-        self.name = operation[0].name
-        self.tool = operation[0].tool
-        self.cam_layers = operation
-        self.set_z_height()
-
-    def set_z_height(self):
-        self.height = -inf
-        for layer in self.cam_layers:
-            if layer.height > self.height:
-                self.height = layer.height
+from src.additive_gcode import AdditiveGcodeLayer
+from src.cam_gcode import (
+    CamGcodeLine,
+    CamGcodeSegment,
+    CamGcodeLayer,
+    NonPlanarOperation,
+)
 
 
 class Parser:
@@ -312,6 +156,13 @@ class Parser:
         return segments[start_index:end_index+1]
 
     def group_cam_segments(self, segments, name, strategy, tool):
+        """
+        Group all cutting segments with a continuous and equal cutting height, including all intermediary segments.
+        Lead-ins and lead-outs will be added to the start and end respectively if they exist.
+        Consequetive non planar segments are also grouped together.
+
+        Returns a list of layers, each to be merged as a whole unit.
+        """
         cutting_segments = [segment for segment in segments if segment.type == 'cutting']
         cam_layers = []
         cutting_group = [cutting_segments[0]]
