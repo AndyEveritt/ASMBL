@@ -74,9 +74,13 @@ class CamGcodeLayer:
     def parse_gcode(self):
         """ Combines the gcode lines from all the operations into a single string """
         gcode = ''
+        last_line_type = None
 
         for segment in self.segments:
             for line in segment.lines:
+                if line.type != last_line_type:
+                    gcode += '; ' + str(line.type) + '\n'
+                    last_line_type = line.type
                 gcode += line.gcode + '\n'
 
         return gcode
@@ -91,17 +95,3 @@ class CamGcodeLayer:
             self.planar = False
         else:
             self.planar = True
-
-
-class NonPlanarOperation():
-    def __init__(self, operation):
-        self.name = operation[0].name
-        self.tool = operation[0].tool
-        self.cam_layers = operation
-        self.set_z_height()
-
-    def set_z_height(self):
-        self.height = -inf
-        for layer in self.cam_layers:
-            if layer.height > self.height:
-                self.height = layer.height

@@ -12,7 +12,6 @@ from src.cam_gcode import (
     CamGcodeLine,
     CamGcodeSegment,
     CamGcodeLayer,
-    NonPlanarOperation,
 )
 
 
@@ -104,7 +103,7 @@ class Parser:
                     layer, 'end', inf))
                 continue
 
-            gcode_add_layers.append(AdditiveGcodeLayer(layer))
+            gcode_add_layers.append(AdditiveGcodeLayer(layer, name))
 
         return gcode_add_layers
 
@@ -208,7 +207,8 @@ class Parser:
     def assign_cam_layer_height(self, cam_layer, later_cam_layers, layer_overlap):
         if len(later_cam_layers) > 0:
             next_cam_layer_height = min([layer.cutting_height for layer in later_cam_layers])
-            later_additive = [layer for layer in self.gcode_add_layers[:-1] if layer.layer_height > next_cam_layer_height]
+            later_additive = [layer for layer in self.gcode_add_layers[:-1]
+                              if layer.layer_height > next_cam_layer_height]
 
             if layer_overlap == 0:
                 cam_layer.layer_height = next_cam_layer_height
@@ -223,7 +223,8 @@ class Parser:
                 cam_layer.layer_height = later_additive[-1].layer_height
 
         else:  # no later ops
-            later_additive = [layer for layer in self.gcode_add_layers[:-1] if layer.layer_height > cam_layer.cutting_height]
+            later_additive = [layer for layer in self.gcode_add_layers[:-1]
+                              if layer.layer_height > cam_layer.cutting_height]
 
             if len(later_additive) == 0:   # no further printing
                 # add 10 since it is unlikely that the printed layer height will exceed 10 mm
@@ -253,7 +254,8 @@ class Parser:
 
         # TODO assign layer height per layer in each operation independently. There is an issue if you have sparse CAM currently
         for i, cam_layer in enumerate(ordered_cam_layers):
-            later_cam_layers = [layer for layer in ordered_cam_layers if layer.cutting_height > cam_layer.cutting_height]
+            later_cam_layers = [
+                layer for layer in ordered_cam_layers if layer.cutting_height > cam_layer.cutting_height]
             self.assign_cam_layer_height(cam_layer, later_cam_layers, layer_overlap)
 
         return ordered_cam_layers
@@ -261,12 +263,12 @@ class Parser:
     def add_retracts(self, cam_layer, clearance_height=5):
         first_line = cam_layer.segments[0].lines[0]
         last_line = cam_layer.segments[-1].lines[-1]
+
         offset = (0, 0, clearance_height)
         pre_retract = utils.offset_gcode(first_line.gcode, offset)
         post_retract = utils.offset_gcode(last_line.gcode, offset)
-        
-        cam_layer.gcode = pre_retract + '\n' + cam_layer.gcode + post_retract + '\n'
-        pass
+
+        cam_layer.gcode = '; retract\n' + pre_retract + '\n' + cam_layer.gcode + '; retract\n' + post_retract + '\n'
 
     def merge_gcode_layers(self, gcode_add, cam_layers):
         """ Takes the individual CAM instructions and merges them into the additive file from Simplify3D """
@@ -330,4 +332,3 @@ if __name__ == "__main__":
 
     parser = Parser(gcode_add, gcode_sub)
     parser.create_output_file(parser.merged_gcode_script)
-    pass
