@@ -205,67 +205,54 @@ class Parser:
 
     def order_cam_operations_by_layer(self, operations):
         """ Takes a list of cam operations and calculates the layer that they should be executed """
-        unordered_ops = []
-        for operation in operations:
-            if operation:
-                for op_instance in operation:
-                    # Finds the min and max z height of the where the tool is "cutting" (ie a Feedrate is specified)
-                    # If operation name starts with 'NP_' then operation is classified as 'Non-Planar'
-                    op_instance.set_z_height()
+        ordered_operations = []
 
         for operation in operations:
-            non_planar_layers = [op_instance for op_instance in operation if not op_instance.planar]
-            planar_layers = [op_instance for op_instance in operation if op_instance.planar]
+            ordered_operation = sorted(operation, key=lambda x: x.cutting_height)
+            ordered_operations.append(ordered_operation)
 
-            for op_instance in planar_layers:
-                unordered_ops.append(op_instance)
-
-            if non_planar_layers:
-                non_planar_op = NonPlanarOperation(non_planar_layers)
-                unordered_ops.append(non_planar_op)
-
-        ordered_operations = sorted(unordered_ops, key=lambda x: x.height)
         layer_overlap = self.config['CamSettings']['layer_overlap']
 
-        for i, op_instance in enumerate(ordered_operations):
-            later_ops = [op for op in ordered_operations if op.height > op_instance.height]
-            if len(later_ops) > 0:
-                next_op_height = min([op.height for op in later_ops])
-                later_additive = [layer for layer in self.gcode_add_layers[:-1] if layer.layer_height > next_op_height]
+        for ordered_operation in ordered_operations:
+            for i, cam_layer in enumerate(ordered_operation):
+                later_cam_layer = [op for op in ordered_operation if op.height > cam_layer.height]
+                if len(later_cam_layer) > 0:
+                    next_layer_height = min([op.height for op in later_cam_layer])
+                    later_additive = [layer for layer in self.gcode_add_layers[:-1] if layer.layer_height > next_layer_height]
 
-                if layer_overlap == 0:
-                    op_instance.layer_height = next_op_height
+                    if layer_overlap == 0:
+                        cam_layer.layer_height = next_layer_height
 
-                elif len(later_additive) == 0:
-                    op_instance.layer_height = next_op_height
+                    elif len(later_additive) == 0:
+                        cam_layer.layer_height = next_layer_height
 
-                elif len(later_additive) >= layer_overlap:
-                    op_instance.layer_height = later_additive[layer_overlap - 1].layer_height
+                    elif len(later_additive) >= layer_overlap:
+                        cam_layer.layer_height = later_additive[layer_overlap - 1].layer_height
 
-                else:
-                    op_instance.layer_height = later_additive[-1].layer_height
+                    else:
+                        cam_layer.layer_height = later_additive[-1].layer_height
 
-            else:  # no later ops
-                later_additive = [layer for layer in self.gcode_add_layers[:-1]
-                                  if layer.layer_height > op_instance.height]
+                else:  # no later ops
+                    later_additive = [layer for layer in self.gcode_add_layers[:-1]
+                                    if layer.layer_height > cam_layer.height]
 
-                if len(later_additive) == 0:   # no further printing
-                    # add 10 since it is unlikely that the printed layer height will exceed 10 mm
-                    # but still want to place cutting after a print at the same height
-                    op_instance.layer_height = op_instance.height + 10
+                    if len(later_additive) == 0:   # no further printing
+                        # add 10 since it is unlikely that the printed layer height will exceed 10 mm
+                        # but still want to place cutting after a print at the same height
+                        cam_layer.layer_height = cam_layer.height + 10
 
-                elif len(later_additive) >= layer_overlap:
-                    op_instance.layer_height = later_additive[layer_overlap - 1].layer_height
+                    elif len(later_additive) >= layer_overlap:
+                        cam_layer.layer_height = later_additive[layer_overlap - 1].layer_height
 
-                else:
-                    op_instance.layer_height = later_additive[-1].layer_height
+                    else:
+                        cam_layer.layer_height = later_additive[-1].layer_height
 
-            if op_instance.layer_height == inf:
-                raise ValueError("CAM op height can't be 'inf'")
+                if cam_layer.layer_height == inf:
+                    raise ValueError("CAM op height can't be 'inf'")
 
         # Expand out non planar layers
         expanded_ordered_operations = []
-        for layer in ordered_operations:
+        for layer in ordered_cam_layers:
             if type(layer) == NonPlanarOperation:
                 for non_planar_layer in layer.cam_layers:
                     non_planar_layer.layer_height = layer.layer_height

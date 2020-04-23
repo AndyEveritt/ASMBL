@@ -67,7 +67,7 @@ class CamGcodeLayer:
         if self.segments:
             self.set_cutting_height()
             self.set_planar()
-            # self.gcode = self.parse_gcode(self.operations)
+            self.gcode = self.parse_gcode()
 
         self.layer_height = None  # height to print to before running the operation
 
