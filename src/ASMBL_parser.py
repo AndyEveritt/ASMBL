@@ -84,9 +84,10 @@ class CamGcodeLine:
 class CamGcodeSegment:
     """ Stores gcode lines for a sequence of a specific movement type """
 
-    def __init__(self, segment_type=None, lines=[]):
+    def __init__(self, index, lines, segment_type):
         self.type = segment_type
         self.lines = lines
+        self.index = index
         self.planar = None
         self.height = None
 
@@ -120,16 +121,19 @@ class CamGcodeSegment:
 class CamGcodeLayer:
     """ Stores all the CAM operations in a specific layer. """
 
-    def __init__(self, operations, name=None, strategy=None, tool=None, height=None):
-        self.height = height
-        self.operations = operations
+    def __init__(self, segments, name=None, strategy=None, tool=None, cutting_height=None):
+        self.segments = segments
         self.name = name
         self.strategy = strategy
         self.tool = tool
         self.planar = None
+        self.cutting_height = cutting_height
+        self.gcode = None
 
-        if self.operations:
-            self.gcode = self.parse_gcode(self.operations)
+        if self.segments:
+            self.set_cutting_height()
+            self.set_planar()
+            # self.gcode = self.parse_gcode(self.operations)
 
         self.layer_height = None  # height to print to before running the operation
 
@@ -142,32 +146,15 @@ class CamGcodeLayer:
 
         return gcode
 
-    def get_min_z_height(self):
-        op_height = min(
-            [line.layer_height for line in self.operations if line.type == 'cutting'])
-        return op_height
+    def set_cutting_height(self):
+        self.cutting_height = max(
+            [segment.height for segment in self.segments if segment.type == 'cutting'])
 
-    def get_max_z_height(self):
-        # Filter out retracts, only care about max Z height of cutting ops
-        op_height = max(
-            [line.layer_height for line in self.operations if line.type == 'cutting'])
-        return op_height
-
-    def get_retract_height(self):
-        retract_height = max(
-            [line.layer_height for line in self.operations])
-        return retract_height
-
-    def set_z_height(self, threshold=0.05):
-        max_height = self.get_max_z_height()
-        min_height = self.get_min_z_height()
-
-        if round(max_height - min_height, 6) > threshold:
-            self.height = max_height
+    def set_planar(self):
+        non_planar_segments = [segment for segment in self.segments if segment.planar is False]
+        if len(non_planar_segments) > 0:
             self.planar = False
-
         else:
-            self.height = min_height
             self.planar = True
 
 
@@ -298,22 +285,52 @@ class Parser:
         segment_lines = [lines[0]]
         for i, line in enumerate(lines[1:]):
             if line.type != lines[i].type:
-                segments.append(CamGcodeSegment(lines[i].type, segment_lines))
+                segment_index = len(segments)
+                segments.append(CamGcodeSegment(segment_index, segment_lines, lines[i].type))
                 segment_lines = [line]
             else:
                 segment_lines.append(line)
 
-        segments.append(CamGcodeSegment(lines[-1].type, segment_lines))
+        segment_index = len(segments)
+        segments.append(CamGcodeSegment(segment_index, segment_lines, lines[-1].type))
 
         return segments
 
-    def group_cam_segments(self, segments):
-        segment_groups = []
-        segment_group
-        cutting_height = None
-        for i, segment in enumerate(segments):
-            if segment.type == 'cutting' and segment.height == cutting_height:
-                
+    def add_lead_in_out(self, segments, cutting_group):
+        pre_index = cutting_group[0].index - 1
+        post_index = cutting_group[-1].index + 1
+        if segments[pre_index].type == 'lead in':
+            start_index = pre_index
+        else:
+            start_index = cutting_group[0].index
+
+        if segments[post_index].type == 'lead out':
+            end_index = post_index
+        else:
+            end_index = cutting_group[-1].index
+
+        return segments[start_index:end_index+1]
+
+    def group_cam_segments(self, segments, name, strategy, tool):
+        cutting_segments = [segment for segment in segments if segment.type == 'cutting']
+        cam_layers = []
+        cutting_group = [cutting_segments[0]]
+        cutting_height = cutting_segments[0].height
+        for cutting_segment in cutting_segments[1:]:
+            # TODO logic needs fixing to deal with non planar and planar segments in same operation
+            if cutting_segment.height == cutting_height or cutting_segment.planar is False:
+                cutting_group.append(cutting_segment)
+            else:
+                cutting_height = cutting_segment.height
+
+                layer_group = self.add_lead_in_out(segments, cutting_group)
+                cam_layers.append(CamGcodeLayer(layer_group, name, strategy, tool))
+                cutting_group = [cutting_segment]
+
+        layer_group = self.add_lead_in_out(segments, cutting_group)
+        cam_layers.append(CamGcodeLayer(layer_group, name, strategy, tool))
+
+        return cam_layers
 
     def split_cam_operations(self, gcode_sub):
         """ Takes fusion360 CAM gcode and splits the operations by execution height """
@@ -328,26 +345,10 @@ class Parser:
             tool = unlabelled_lines.pop(0)
             unlabelled_lines = [line for line in unlabelled_lines if line != '']
 
-            operations.append([])
-
             lines = self.assign_cam_line_type(unlabelled_lines)
             segments = self.group_cam_lines(lines)
-
-            line_heights = [line.layer_height for line in lines]
-            local_peaks = utils.find_maxima(line_heights)
-
-            if len(local_peaks) > 0:
-                op_lines = lines[0: local_peaks[0]+1]
-                operations[i].append(CamGcodeLayer(op_lines, name, strategy, tool))
-
-                for index, peak in enumerate(local_peaks[:-1]):
-                    op_lines = lines[local_peaks[index]: local_peaks[index+1]+1]
-                    operations[i].append(CamGcodeLayer(op_lines, name, strategy, tool))
-
-                op_lines = lines[local_peaks[-1]:]
-                operations[i].append(CamGcodeLayer(op_lines, name, strategy, tool))
-            else:
-                operations[i].append(CamGcodeLayer(lines, name, strategy, tool))
+            operation_layers = self.group_cam_segments(segments, name, strategy, tool)
+            operations.append(operation_layers)
 
         return operations
 
