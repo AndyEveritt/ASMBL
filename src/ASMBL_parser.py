@@ -61,12 +61,12 @@ class Parser:
         if progress:
             progress.message = 'Ordering subtractive gcode layers'
             progress.progressValue += 1
-        self.cam_operations = self.order_cam_operations_by_layer(operations)
+        self.cam_layers = self.order_cam_operations_by_layer(operations)
 
         if progress:
             progress.message = 'Merging gcode layers'
             progress.progressValue += 1
-        self.merged_gcode = self.merge_gcode_layers(self.gcode_add_layers, self.cam_operations)
+        self.merged_gcode = self.merge_gcode_layers(self.gcode_add_layers, self.cam_layers)
 
         if progress:
             progress.message = 'Creating gcode script'
@@ -258,9 +258,22 @@ class Parser:
 
         return ordered_cam_layers
 
-    def merge_gcode_layers(self, gcode_add, cam_operations):
+    def add_retracts(self, cam_layer, clearance_height=5):
+        first_line = cam_layer.segments[0].lines[0]
+        last_line = cam_layer.segments[-1].lines[-1]
+        offset = (0, 0, clearance_height)
+        pre_retract = utils.offset_gcode(first_line.gcode, offset)
+        post_retract = utils.offset_gcode(last_line.gcode, offset)
+        
+        cam_layer.gcode = pre_retract + '\n' + cam_layer.gcode + post_retract + '\n'
+        pass
+
+    def merge_gcode_layers(self, gcode_add, cam_layers):
         """ Takes the individual CAM instructions and merges them into the additive file from Simplify3D """
-        merged_gcode = gcode_add + cam_operations
+        for cam_layer in cam_layers:
+            self.add_retracts(cam_layer)
+
+        merged_gcode = gcode_add + cam_layers
         merged_gcode.sort(key=lambda x: x.layer_height)
 
         return merged_gcode
