@@ -134,6 +134,7 @@ function onSection() {
       writeComment(comment);
     }
   }
+  else {writeComment('N/A')}
 
   if (hasParameter("operation-strategy")) {
     var strategy = getParameter("operation-strategy");
@@ -141,6 +142,14 @@ function onSection() {
       writeComment('strategy: ' + strategy);
     }
   }
+  else {writeComment('strategy: N/A')}
+
+  // if (hasParameter("operation:topHeight_value")) {
+  //   var topHeight = getParameter("operation:topHeight_value");
+  //   if (topHeight) {
+  //     writeComment('topHeight: ' + topHeight);
+  //   }
+  // }
   
   writeBlock("T" + toolFormat.format(tool.number));
 

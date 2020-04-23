@@ -115,6 +115,8 @@ class Parser:
         for line in unlabelled_lines:
             if line.startswith('(type: '):
                 line_type = line[7:].strip(')')
+            elif line.startswith('('):
+                continue
             else:
                 lines.append(CamGcodeLine(line, self.offset, line_type))
 
@@ -203,64 +205,58 @@ class Parser:
 
         return operations
 
+    def assign_cam_layer_height(self, cam_layer, later_cam_layers, layer_overlap):
+        if len(later_cam_layers) > 0:
+            next_cam_layer_height = min([layer.cutting_height for layer in later_cam_layers])
+            later_additive = [layer for layer in self.gcode_add_layers[:-1] if layer.layer_height > next_cam_layer_height]
+
+            if layer_overlap == 0:
+                cam_layer.layer_height = next_cam_layer_height
+
+            elif len(later_additive) == 0:
+                cam_layer.layer_height = next_cam_layer_height
+
+            elif len(later_additive) >= layer_overlap:
+                cam_layer.layer_height = later_additive[layer_overlap - 1].layer_height
+
+            else:
+                cam_layer.layer_height = later_additive[-1].layer_height
+
+        else:  # no later ops
+            later_additive = [layer for layer in self.gcode_add_layers[:-1] if layer.layer_height > cam_layer.cutting_height]
+
+            if len(later_additive) == 0:   # no further printing
+                # add 10 since it is unlikely that the printed layer height will exceed 10 mm
+                # but still want to place cutting after a print at the same height
+                cam_layer.layer_height = cam_layer.height + 10
+
+            elif len(later_additive) >= layer_overlap:
+                cam_layer.layer_height = later_additive[layer_overlap - 1].layer_height
+
+            else:
+                cam_layer.layer_height = later_additive[-1].layer_height
+
+        if cam_layer.layer_height == inf:
+            raise ValueError("CAM op height can't be 'inf'")
+
     def order_cam_operations_by_layer(self, operations):
         """ Takes a list of cam operations and calculates the layer that they should be executed """
-        ordered_operations = []
+        unordered_cam_layers = []
 
         for operation in operations:
-            ordered_operation = sorted(operation, key=lambda x: x.cutting_height)
-            ordered_operations.append(ordered_operation)
+            for cam_layer in operation:
+                unordered_cam_layers.append(cam_layer)
+
+        ordered_cam_layers = sorted(unordered_cam_layers, key=lambda x: x.cutting_height)
 
         layer_overlap = self.config['CamSettings']['layer_overlap']
 
-        for ordered_operation in ordered_operations:
-            for i, cam_layer in enumerate(ordered_operation):
-                later_cam_layer = [op for op in ordered_operation if op.height > cam_layer.height]
-                if len(later_cam_layer) > 0:
-                    next_layer_height = min([op.height for op in later_cam_layer])
-                    later_additive = [layer for layer in self.gcode_add_layers[:-1] if layer.layer_height > next_layer_height]
+        # TODO assign layer height per layer in each operation independently. There is an issue if you have sparse CAM currently
+        for i, cam_layer in enumerate(ordered_cam_layers):
+            later_cam_layers = [layer for layer in ordered_cam_layers if layer.cutting_height > cam_layer.cutting_height]
+            self.assign_cam_layer_height(cam_layer, later_cam_layers, layer_overlap)
 
-                    if layer_overlap == 0:
-                        cam_layer.layer_height = next_layer_height
-
-                    elif len(later_additive) == 0:
-                        cam_layer.layer_height = next_layer_height
-
-                    elif len(later_additive) >= layer_overlap:
-                        cam_layer.layer_height = later_additive[layer_overlap - 1].layer_height
-
-                    else:
-                        cam_layer.layer_height = later_additive[-1].layer_height
-
-                else:  # no later ops
-                    later_additive = [layer for layer in self.gcode_add_layers[:-1]
-                                    if layer.layer_height > cam_layer.height]
-
-                    if len(later_additive) == 0:   # no further printing
-                        # add 10 since it is unlikely that the printed layer height will exceed 10 mm
-                        # but still want to place cutting after a print at the same height
-                        cam_layer.layer_height = cam_layer.height + 10
-
-                    elif len(later_additive) >= layer_overlap:
-                        cam_layer.layer_height = later_additive[layer_overlap - 1].layer_height
-
-                    else:
-                        cam_layer.layer_height = later_additive[-1].layer_height
-
-                if cam_layer.layer_height == inf:
-                    raise ValueError("CAM op height can't be 'inf'")
-
-        # Expand out non planar layers
-        expanded_ordered_operations = []
-        for layer in ordered_cam_layers:
-            if type(layer) == NonPlanarOperation:
-                for non_planar_layer in layer.cam_layers:
-                    non_planar_layer.layer_height = layer.layer_height
-                    expanded_ordered_operations.append(non_planar_layer)
-            else:
-                expanded_ordered_operations.append(layer)
-
-        return expanded_ordered_operations
+        return ordered_cam_layers
 
     def merge_gcode_layers(self, gcode_add, cam_operations):
         """ Takes the individual CAM instructions and merges them into the additive file from Simplify3D """
