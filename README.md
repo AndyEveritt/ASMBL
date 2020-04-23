@@ -47,6 +47,7 @@ For the standalone program, download the latest release for the `ASMBL.exe`, an 
       - [Config](#config)
       - [Program](#program)
   - [Run Standalone](#run-standalone)
+- [Updating](#updating)
 - [Contributions](#contributions)
 - [Authors and Acknowledgment](#authors-and-acknowledgment)
 - [License](#license)
@@ -364,6 +365,12 @@ Set the coloring to `Active Toolhead` and enable `Travel moves` to ensure the pa
 The subtractive processes are displayed as travel moves, scroll through the layers to check the subtractive processes have been added at the correct point in the print (defined in `config.json`)
 
 <img src="docs/images/simplify3d_preview.png" width="480">
+
+# Updating
+
+Close Fusion 360 and overwrite the contents of the ASMBL repo folder with the latest version from releases (or use `git pull` if you previously cloned the repo).
+
+If you want Fusion to automatically detect the update then make sure the folder names are the same, otherwise repeat this step with the new folder [Fusion 360 Add-in](#fusion-360-add-in).
 
 # Contributions
 
