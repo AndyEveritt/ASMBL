@@ -144,7 +144,7 @@ class Parser:
     def add_lead_in_out(self, segments, cutting_group):
         pre_index = cutting_group[0].index - 1
         post_index = cutting_group[-1].index + 1
-        if segments[pre_index].type == 'lead in':
+        if segments[pre_index].type == 'lead in' or segments[pre_index].type == 'plunge':
             start_index = pre_index
         else:
             start_index = cutting_group[0].index
