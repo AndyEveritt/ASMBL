@@ -1,5 +1,5 @@
 from math import inf
-import src.utils as utils
+from . import utils
 
 
 class CamGcodeLine:

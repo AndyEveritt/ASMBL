@@ -6,9 +6,9 @@ from math import (
     ceil,
     floor,
 )
-import src.utils as utils
-from src.additive_gcode import AdditiveGcodeLayer
-from src.cam_gcode import (
+from . import utils
+from .additive_gcode import AdditiveGcodeLayer
+from .cam_gcode import (
     CamGcodeLine,
     CamGcodeSegment,
     CamGcodeLayer,
@@ -229,7 +229,7 @@ class Parser:
             if len(later_additive) == 0:   # no further printing
                 # add 10 since it is unlikely that the printed layer height will exceed 10 mm
                 # but still want to place cutting after a print at the same height
-                cam_layer.layer_height = cam_layer.height + 10
+                cam_layer.layer_height = cam_layer.cutting_height + 10
 
             elif len(later_additive) >= layer_overlap:
                 cam_layer.layer_height = later_additive[layer_overlap - 1].layer_height
