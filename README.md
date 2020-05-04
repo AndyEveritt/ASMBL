@@ -144,6 +144,8 @@ First you need to create an offset of your model, this will control how much cut
   * Hide the original body to make selecting faces easier.
   * An offset amount of ~0.2-0.3 mm works well in my testing.
   * You do not want to offset any face you will not be able to machine, **ie the base**
+  * For top surfacing to work properly, you need to offset a sufficient amount for the additive slicer to add an additional layer. This can normally be achieved by offsetting the same amount as your print layer height.
+  * *You do not want to offset more than 1 print layer in the vertical direction or the cutting order will not work.*
 * Once you are done, hide the offset body and show the original body.
 
 <img src="docs/usage/images/fusion_fff_offset.png" width=480>
