@@ -60,14 +60,11 @@ For the standalone program, download the latest release for the `ASMBL.exe`, an 
 
 ## Fusion 360 Add-in
 
-Install the repo in your desired folder location.
+Unzip the repo in your desired folder location or clone the repo:
 
-**Windows**
 ```bash
 git clone https://github.com/AndyEveritt/ASMBL.git
 ```
-
-To run the standalone program, ensure the python virtual environment is enabled, then use `python main.py`
 
 * Open Fusion360
 * Click the add-in tool
