@@ -127,6 +127,7 @@ First you need to create an offset of your model, this will control how much cut
 
 * Open you Fusion 360 file, or `.step` in Fusion 360.
 * Turn on `Capture Design History` if it is not already on.
+  * This can be found in the `Design` workspace.
 
 <img src="docs/usage/images/fusion_design_history.png" width=240>
 
