@@ -47,6 +47,7 @@ For the standalone program, download the latest release for the `ASMBL.exe`, an 
       - [Config](#config)
       - [Program](#program)
   - [Run Standalone](#run-standalone)
+- [Updating](#updating)
 - [Contributions](#contributions)
 - [Authors and Acknowledgment](#authors-and-acknowledgment)
 - [License](#license)
@@ -59,14 +60,11 @@ For the standalone program, download the latest release for the `ASMBL.exe`, an 
 
 ## Fusion 360 Add-in
 
-Install the repo in your desired folder location.
+Unzip the repo in your desired folder location or clone the repo:
 
-**Windows**
 ```bash
 git clone https://github.com/AndyEveritt/ASMBL.git
 ```
-
-To run the standalone program, ensure the python virtual environment is enabled, then use `python main.py`
 
 * Open Fusion360
 * Click the add-in tool
@@ -111,7 +109,7 @@ To modify the source code follow the guide here: [Standalone Installation](docs/
 
 ## Material Choice
 
-A details on materials that have been tested can be found [here](docs/materials.md).
+A details on materials that have been tested can be found [here](docs/usage/materials.md).
 
 <br>
 
@@ -129,6 +127,7 @@ First you need to create an offset of your model, this will control how much cut
 
 * Open you Fusion 360 file, or `.step` in Fusion 360.
 * Turn on `Capture Design History` if it is not already on.
+  * This can be found in the `Design` workspace.
 
 <img src="docs/usage/images/fusion_design_history.png" width=240>
 
@@ -143,6 +142,8 @@ First you need to create an offset of your model, this will control how much cut
   * Hide the original body to make selecting faces easier.
   * An offset amount of ~0.2-0.3 mm works well in my testing.
   * You do not want to offset any face you will not be able to machine, **ie the base**
+  * For top surfacing to work properly, you need to offset a sufficient amount for the additive slicer to add an additional layer. This can normally be achieved by offsetting the same amount as your print layer height.
+  * *You do not want to offset more than 1 print layer in the vertical direction or the cutting order will not work.*
 * Once you are done, hide the offset body and show the original body.
 
 <img src="docs/usage/images/fusion_fff_offset.png" width=480>
@@ -364,6 +365,12 @@ Set the coloring to `Active Toolhead` and enable `Travel moves` to ensure the pa
 The subtractive processes are displayed as travel moves, scroll through the layers to check the subtractive processes have been added at the correct point in the print (defined in `config.json`)
 
 <img src="docs/images/simplify3d_preview.png" width="480">
+
+# Updating
+
+Close Fusion 360 and overwrite the contents of the ASMBL repo folder with the latest version from releases (or use `git pull` if you previously cloned the repo).
+
+If you want Fusion to automatically detect the update then make sure the folder names are the same, otherwise repeat this step with the new folder [Fusion 360 Add-in](#fusion-360-add-in).
 
 # Contributions
 
