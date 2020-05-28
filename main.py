@@ -22,6 +22,9 @@ if __name__ == "__main__":
 
     args = arg_parser.parse_args()
 
+    print('parsing files...')
     asmbl_parser = Parser(args.config)
+    print('saving output...')
     asmbl_parser.create_output_file(asmbl_parser.merged_gcode_script)
+    print('complete')
     pass
