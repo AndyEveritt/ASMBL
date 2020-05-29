@@ -224,12 +224,12 @@ See [Operation Setup](#operation-setup) for more details.
 
 #### **Key Understanding Point**
 
-This program separates each of the CAM operations into segments separated by local maximas in tool height (ie retracts).
+This program separates each of the CAM operations into segments separated by motion type (cutting, lead-in, plunge, etc.).
 
 > **This is key to understanding how to CAM a model effectively. Below are guidelines but they may not work for every situation.
 > Use this overview to understand what to look for when setting up the CAM operations.**
 
-Each of these segments is then classified as either planar or non-planar.
+Each of the `cutting` segments are then classified as either planar or non-planar.
 
 * Planar segments are where the cutting happens on the XY plane.
 * Non-planar segments also cut in the Z axis.
@@ -239,26 +239,15 @@ The height of each segment is determined:
 * For planar segments, it is the minimum height the cutter is active.
 * For non-planar segments, it is the maximum height the cutter is active.
 
-All the non-planar segments of an operation are then grouped to maintain their order. The layer height at which the
-segment or group of segments needs to occur is calculated.
+Consequetive cutting segments are then grouped if they have the same height as the previous segment. Consequetive segments are also groupsd if they are non planar.
 
-> The height of a group of non-planar segments is the maximum cutting height of all of the segments in the group.
+For each group, any prior `lead-in` segments and post `lead-out` segments are found and added to the group respectively. A `CamGcodeLayer` is created containing every segment between the first and last segment in the group for all motion types.
 
-The segments and groups of segments merged with the additive layers by sorting all additive and subtractive segments by layer height.
+Retracts are automatically added between each `CamGcodeLayer` to ensure the tool does not collide with the part.
 
-> **Because CAM operations are separated into segments by local maximas in tool height, it is vital that the tool retracts between every layer, otherwise the operation will be considered non-planar and it could result in the cutter or tool body colliding with your part.**
-
-Below are examples of a good operation and a bad operation. The only difference is the `linking` settings.
-
-In this operation the tool retracts after every layer. It will be properly segmented and inserted at the correct location.
-
-<img src="docs/usage/images/fusion_cam_good_retract.png" width=480>
-
-The same operation with different `linking` settings can result in the following. 2 of the layers do not retract between them, this will cause those layers to be treated as a single segment and it will cut before the part has been printed.
-
-<img src="docs/usage/images/fusion_cam_bad_retract.png" width=480>
-
-> **Always inspect the gcode with travel moves turned on after it has been generated. This program reorders a sgnificant proportion of the gcode, it can happen that a single missing/wrong line causes the tool to pass through the model, this is unlikely if sticking with planar operations but a possibility when using non-planar**
+> **Always inspect the gcode with travel moves turned on after it has been generated. This program reorders a significant proportion of the gcode, and replaces Fusion360's default retracts & travel moves.**
+> 
+> It can happen that a single missing/wrong line in the toolpath causes the tool to pass through the model, this is unlikely if sticking with planar operations but a possibility when using non-planar
 
 <br>
 <br>
@@ -356,7 +345,7 @@ Arg (long) | Arg (short) | Default | Usage
 
 To run the program, ensure the `config.json` is configured correctly, then run the `ASMBL.exe`
 
-The program will output the file with a name according the the config settings in the `output` folder. (An output folder will be created in the same directory if one does not exist)
+The program will output the file with a name according the the config settings in the `output` folder. (An output folder will be created in the same directory as the `.exe` if one does not exist)
 
 >**Always preview the generated gcode in Simplify3D before attempting to print it**
 

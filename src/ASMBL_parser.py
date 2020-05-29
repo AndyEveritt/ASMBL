@@ -172,6 +172,7 @@ class Parser:
             # TODO logic needs fixing to deal with non planar and planar segments in same operation
             if cutting_segment.height == cutting_height or cutting_segment.planar is False:
                 cutting_group.append(cutting_segment)
+                cutting_height = cutting_segment.height
             else:
                 cutting_height = cutting_segment.height
 

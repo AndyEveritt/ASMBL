@@ -69,7 +69,7 @@ Angled overhangs can be CAM'd using offset faces. See the example [here](../../e
 
 ## 2D Contour
 
-> **Uses**: Can be used for vertical walls if you can't get the retracts to cooperate using 3D contour
+> **Uses**: Can be used for vertical walls where you may want more control that with a 3D contour
 
 * `Tool`
   * Select/create a cutting tool with appropriate dimensions for what is installed on you ASMBL machine
