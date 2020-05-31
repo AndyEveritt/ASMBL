@@ -35,6 +35,7 @@ class Parser:
     def main(self):
         progress = self.progress
 
+        print('Opening files...')
         if progress:
             progress.message = 'Opening files'
             progress.progressValue += 1
@@ -42,31 +43,37 @@ class Parser:
 
         # Fusion 360 currently only exports absolute extrusion gcode, this needs to be converted
         # This method will not convert gcode if it is already relative
+        print('Converting additive gcode to relative positioning...')
         if progress:
             progress.message = 'Converting additive gcode to relative positioning'
             progress.progressValue += 1
         self.gcode_add = utils.convert_relative(self.gcode_add)
 
+        print('Spliting additive gcode layers...')
         if progress:
             progress.message = 'Spliting additive gcode layers'
             progress.progressValue += 1
         self.gcode_add_layers = self.split_additive_layers(self.gcode_add)
 
+        print('Spliting subtractive gcode layers...')
         if progress:
             progress.message = 'Spliting subtractive gcode layers'
             progress.progressValue += 1
         operations = self.split_cam_operations(self.gcode_sub)
 
+        print('Ordering subtractive gcode layers...')
         if progress:
             progress.message = 'Ordering subtractive gcode layers'
             progress.progressValue += 1
         self.cam_layers = self.order_cam_operations_by_layer(operations)
 
+        print('Merging gcode layers...')
         if progress:
             progress.message = 'Merging gcode layers'
             progress.progressValue += 1
         self.merged_gcode = self.merge_gcode_layers(self.gcode_add_layers, self.cam_layers)
 
+        print('Creating gcode script...')
         if progress:
             progress.message = 'Creating gcode script'
             progress.progressValue += 1
