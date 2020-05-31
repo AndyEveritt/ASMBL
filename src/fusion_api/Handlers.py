@@ -1,10 +1,11 @@
+from pathlib import Path
 import adsk.core
 import adsk.fusion
 import traceback
 import time
 import os
 
-from ..src.ASMBL_parser import Parser
+from ..ASMBL_parser import Parser
 
 # Global list to keep all event handlers in scope.
 # This is only needed with Python.
@@ -101,7 +102,7 @@ def postToolpaths(ui, cam, viewResult):
 
         if setupOperationType == adsk.cam.OperationTypes.MillingOperation:
             programName = 'tmpSubtractive'
-            postConfig = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'post_processors', 'asmbl_cam.cps')
+            postConfig = os.path.join(Path(__file__).parents[2], 'post_processors', 'asmbl_cam.cps')
 
             # create the postInput object
             postInput = adsk.cam.PostProcessInput.create(programName, postConfig, outputFolder, units)
@@ -111,7 +112,7 @@ def postToolpaths(ui, cam, viewResult):
         
         elif setupOperationType == None:
             programName = 'tmpAdditive'
-            postConfig = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'post_processors', 'asmbl_fff.cps')
+            postConfig = os.path.join(Path(__file__).parents[2], 'post_processors', 'asmbl_fff.cps')
 
             # create the postInput object
             postInput = adsk.cam.PostProcessInput.create(programName, postConfig, outputFolder, units)
@@ -196,14 +197,14 @@ class PostProcessCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
                 however this is not always possible depending on the geometry.</br>\
                 <br>Limited by cutter length</br>\
                 <br>This does not alter the toolpath, only when it happens</br>'
-            layerOverlapInput.toolClipFilename = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'resources', 'GenerateAsmbl', 'tooltip_overlap.png')
+            layerOverlapInput.toolClipFilename = os.path.join(Path(__file__).parents[2], 'resources', 'GenerateAsmbl', 'tooltip_overlap.png')
 
             layerDropdownInput = groupCamChildInputs.addFloatSpinnerCommandInput('layerDropdown', 'Layer Dropdown', 'mm', 0, 1, 0.1, 0)
             layerDropdownInput.tooltip = 'Controls how much the cutting tip should be lowered on a global level'
             layerDropdownInput.tooltipDescription = '\
                 <br>Set this to 0 mm for accurate parts. Setting it equal to half a layer height can create smoother cut surfaces</br>\
                 <br>This shifts the entire subtractive toolpath by this amount</br>'
-            layerDropdownInput.toolClipFilename = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'resources', 'GenerateAsmbl', 'tooltip_dropdown.png')
+            layerDropdownInput.toolClipFilename = os.path.join(Path(__file__).parents[2], 'resources', 'GenerateAsmbl', 'tooltip_dropdown.png')
 
         except:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
