@@ -74,14 +74,17 @@ def postToolpaths(ui, cam, viewResult):
         ui.messageBox('No CAM data exists in the active document.')
         return
 
-    # Verify that there are any setups.
+    # verify there are operations
     if cam.allOperations.count == 0:
         ui.messageBox('No CAM operations exist in the active document.')
         return
+
+    # Verify that there are any setups.
+    setups = [setup for setup in cam.setups if not setup.isSuppressed]
     
-    setupsCount = cam.setups.count
+    setupsCount = len(setups)
     if setupsCount < 2:
-        ui.messageBox('Only 1 setup, requires an additive & milling setup to work')
+        ui.messageBox('Missing setups, requires an additive & milling setup to work')
         return
     if setupsCount > 2:
         ui.messageBox('Too many setups, requires an additive & milling setup to work')
@@ -92,9 +95,13 @@ def postToolpaths(ui, cam, viewResult):
     # specify the NC file output units
     units = adsk.cam.PostOutputUnitOptions.DocumentUnitsOutput
 
-    for i in range(setupsCount):
-        setup = cam.setups.item(i)
+    for setup in setups:
         setupOperationType = None
+        # verify there are operations in setup
+        if setup.operations.count == 0:
+            ui.messageBox('No CAM operations exist in {}.'.format(setup.name))
+            return
+
         try:
             setupOperationType = setup.operationType
         except:
