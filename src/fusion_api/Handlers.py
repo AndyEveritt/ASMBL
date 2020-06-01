@@ -81,7 +81,7 @@ def postToolpaths(ui, cam, viewResult):
 
     # Verify that there are any setups.
     setups = [setup for setup in cam.setups if not setup.isSuppressed]
-    
+
     setupsCount = len(setups)
     if setupsCount < 2:
         ui.messageBox('Missing setups, requires an additive & milling setup to work')
@@ -89,7 +89,7 @@ def postToolpaths(ui, cam, viewResult):
     if setupsCount > 2:
         ui.messageBox('Too many setups, requires an additive & milling setup to work')
         return
-    
+
     outputFolder = cam.temporaryFolder
 
     # specify the NC file output units
@@ -105,7 +105,7 @@ def postToolpaths(ui, cam, viewResult):
         try:
             setupOperationType = setup.operationType
         except:
-            pass # there is a bug in Fusion as of writing that means Additive setups don't have an operation type
+            pass  # there is a bug in Fusion as of writing that means Additive setups don't have an operation type
 
         if setupOperationType == adsk.cam.OperationTypes.MillingOperation:
             programName = 'tmpSubtractive'
@@ -116,7 +116,7 @@ def postToolpaths(ui, cam, viewResult):
             postInput.isOpenInEditor = viewResult
 
             cam.postProcess(setup, postInput)
-        
+
         elif setupOperationType == None:
             programName = 'tmpAdditive'
             postConfig = os.path.join(Path(__file__).parents[2], 'post_processors', 'asmbl_fff.cps')
@@ -126,7 +126,7 @@ def postToolpaths(ui, cam, viewResult):
             postInput.isOpenInEditor = viewResult
 
             cam.postProcess(setup, postInput)
-        
+
     # open the output folder in Finder on Mac or in Explorer on Windows
     if viewResult:
         if (os.name == 'posix'):
@@ -179,10 +179,12 @@ class PostProcessCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
             tabSettingsChildInputs = tabCmdInputSettings.children
 
             # Create bool value input to check whether you should generate toolpaths.
-            generateToolpathsInput = tabSettingsChildInputs.addBoolValueInput('generateToolpaths', 'Generate Toolpaths', True, '', False)
+            generateToolpathsInput = tabSettingsChildInputs.addBoolValueInput(
+                'generateToolpaths', 'Generate Toolpaths', True, '', False)
             generateToolpathsInput.tooltip = 'Regenerated all toolpaths.'
-            
-            viewIntermediateFilesInput = tabSettingsChildInputs.addBoolValueInput('viewIntermediateFiles', 'View Intermediate Files', True, '', False)
+
+            viewIntermediateFilesInput = tabSettingsChildInputs.addBoolValueInput(
+                'viewIntermediateFiles', 'View Intermediate Files', True, '', False)
             viewIntermediateFilesInput.tooltip = 'Pre-merged gcode files will be opened in your default txt editor.'
 
             # Create an editable textbox input.
@@ -197,21 +199,25 @@ class PostProcessCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
             groupCamChildInputs = groupCamCmdInput.children
 
             # Create CAM inputs
-            layerOverlapInput = groupCamChildInputs.addIntegerSpinnerCommandInput('layerOverlap', 'Layer Overlap', 0, 10000, 1, 1)
+            layerOverlapInput = groupCamChildInputs.addIntegerSpinnerCommandInput(
+                'layerOverlap', 'Layer Overlap', 0, 10000, 1, 1)
             layerOverlapInput.tooltip = 'Controls how many layers the cutting tip should overlap previously cut layers'
             layerOverlapInput.tooltipDescription = '\
                 <br>A higher value generally makes for a better finish as it uses the side of the cutter instead of the tip, \
                 however this is not always possible depending on the geometry.</br>\
                 <br>Limited by cutter length</br>\
                 <br>This does not alter the toolpath, only when it happens</br>'
-            layerOverlapInput.toolClipFilename = os.path.join(Path(__file__).parents[2], 'resources', 'GenerateAsmbl', 'tooltip_overlap.png')
+            layerOverlapInput.toolClipFilename = os.path.join(
+                Path(__file__).parents[2], 'resources', 'GenerateAsmbl', 'tooltip_overlap.png')
 
-            layerDropdownInput = groupCamChildInputs.addFloatSpinnerCommandInput('layerDropdown', 'Layer Dropdown', 'mm', 0, 1, 0.1, 0)
+            layerDropdownInput = groupCamChildInputs.addFloatSpinnerCommandInput(
+                'layerDropdown', 'Layer Dropdown', 'mm', 0, 1, 0.1, 0)
             layerDropdownInput.tooltip = 'Controls how much the cutting tip should be lowered on a global level'
             layerDropdownInput.tooltipDescription = '\
                 <br>Set this to 0 mm for accurate parts. Setting it equal to half a layer height can create smoother cut surfaces</br>\
                 <br>This shifts the entire subtractive toolpath by this amount</br>'
-            layerDropdownInput.toolClipFilename = os.path.join(Path(__file__).parents[2], 'resources', 'GenerateAsmbl', 'tooltip_dropdown.png')
+            layerDropdownInput.toolClipFilename = os.path.join(
+                Path(__file__).parents[2], 'resources', 'GenerateAsmbl', 'tooltip_dropdown.png')
 
         except:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
@@ -249,7 +255,7 @@ class PostProcessExecuteHandler(adsk.core.CommandEventHandler):
             except:
                 ui.messageBox('Failed generating toolpaths:\n{}'.format(traceback.format_exc()))
                 return
-        
+
         #  create and show the progress dialog for remainder of process.
         progress = ui.createProgressDialog()
         progress.isCancelButtonShown = False
@@ -287,7 +293,6 @@ class PostProcessExecuteHandler(adsk.core.CommandEventHandler):
         except:
             ui.messageBox('Failed posting toolpaths:\n{}'.format(traceback.format_exc()))
             return
-
 
         config = {
             "InputFiles": {

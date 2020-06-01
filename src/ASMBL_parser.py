@@ -260,7 +260,8 @@ class Parser:
 
         layer_overlap = self.config['CamSettings']['layer_overlap']
 
-        # TODO assign layer height per layer in each operation independently. There is an issue if you have sparse CAM currently
+        # TODO assign layer height per layer in each operation independently.
+        # There is an issue if you have sparse CAM currently
         for i, cam_layer in enumerate(ordered_cam_layers):
             later_cam_layers = [
                 layer for layer in ordered_cam_layers if layer.cutting_height > cam_layer.cutting_height]
