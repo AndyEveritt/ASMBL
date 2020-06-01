@@ -96,8 +96,7 @@ Angled overhangs can be CAM'd using offset faces. See the example [here](../../e
 
 # Non-planar Operations
 
-To make an operation be considered as Non-planar, simply rename the operation in the subtractive setup so the name begins
-with `NP_`
+This program will automatically detect if an operation is non planar and will embed the cutting after all required parts have been printed.
 
 Non-planar operations can be configured similarly to the planar operations described above. More care is required when creating the toolpaths as is it easy to accidentally cut into the part.
 

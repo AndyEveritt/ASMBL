@@ -38,7 +38,7 @@ For the standalone program, download the latest release for the `ASMBL.exe`, an 
       - [Fusion360](#fusion360-1)
       - [External Slicer](#external-slicer)
     - [CAM setup](#cam-setup)
-      - [**Key Understanding Point**](#key-understanding-point)
+      - [Retraction & Non-Planar Understanding Point](#retraction--non-planar-understanding-point)
       - [Tool Config](#tool-config)
       - [Operation Setup](#operation-setup)
   - [Post Processing](#post-processing)
@@ -218,11 +218,7 @@ Other 3D operations | Can be used for non planar operations **if you know what y
 
 See [Operation Setup](#operation-setup) for more details.
 
-<br>
-<br>
-<br>
-
-#### **Key Understanding Point**
+#### Retraction & Non-Planar Understanding Point
 
 This program separates each of the CAM operations into segments separated by motion type (cutting, lead-in, plunge, etc.).
 
@@ -244,14 +240,12 @@ Consequetive cutting segments are then grouped if they have the same height as t
 For each group, any prior `lead-in` segments and post `lead-out` segments are found and added to the group respectively. A `CamGcodeLayer` is created containing every segment between the first and last segment in the group for all motion types.
 
 Retracts are automatically added between each `CamGcodeLayer` to ensure the tool does not collide with the part.
+Therefore, if there are multiple consequetive cutting segments at the same height (top surfacing etc.), the Fusion retracts will be used;
+otherwise, this program will automatically replace any retracts/transitions Fusion creates.
 
 > **Always inspect the gcode with travel moves turned on after it has been generated. This program reorders a significant proportion of the gcode, and replaces Fusion360's default retracts & travel moves.**
 > 
 > It can happen that a single missing/wrong line in the toolpath causes the tool to pass through the model, this is unlikely if sticking with planar operations but a possibility when using non-planar
-
-<br>
-<br>
-<br>
 
 #### Tool Config
 
