@@ -35,6 +35,7 @@ class Parser:
     def main(self):
         progress = self.progress
 
+        print('Opening files...')
         if progress:
             progress.message = 'Opening files'
             progress.progressValue += 1
@@ -42,37 +43,44 @@ class Parser:
 
         # Fusion 360 currently only exports absolute extrusion gcode, this needs to be converted
         # This method will not convert gcode if it is already relative
+        print('Converting additive gcode to relative positioning...')
         if progress:
             progress.message = 'Converting additive gcode to relative positioning'
             progress.progressValue += 1
         self.gcode_add = utils.convert_relative(self.gcode_add)
 
+        print('Spliting additive gcode layers...')
         if progress:
             progress.message = 'Spliting additive gcode layers'
             progress.progressValue += 1
         self.gcode_add_layers = self.split_additive_layers(self.gcode_add)
 
+        print('Spliting subtractive gcode layers...')
         if progress:
             progress.message = 'Spliting subtractive gcode layers'
             progress.progressValue += 1
         operations = self.split_cam_operations(self.gcode_sub)
 
+        print('Ordering subtractive gcode layers...')
         if progress:
             progress.message = 'Ordering subtractive gcode layers'
             progress.progressValue += 1
         self.cam_layers = self.order_cam_operations_by_layer(operations)
 
+        print('Merging gcode layers...')
         if progress:
             progress.message = 'Merging gcode layers'
             progress.progressValue += 1
         self.merged_gcode = self.merge_gcode_layers(self.gcode_add_layers, self.cam_layers)
 
+        print('Creating gcode script...')
         if progress:
             progress.message = 'Creating gcode script'
             progress.progressValue += 1
         self.create_gcode_script(self.merged_gcode)
 
     def open_files(self, config):
+        """ Open the additive and subtractive gcode files in `config` """
         gcode_add_file = open(config['InputFiles']['additive_gcode'], 'r')
         self.gcode_add = gcode_add_file.read()
 
@@ -142,6 +150,10 @@ class Parser:
         return segments
 
     def add_lead_in_out(self, segments, cutting_group):
+        """
+        Add lead in to start of group of cutting segments, and lead out to end if they exist.
+        This is required to ensure the cutter does not miss any stock for certain toolpaths
+        """
         pre_index = cutting_group[0].index - 1
         post_index = cutting_group[-1].index + 1
         if segments[pre_index].type == 'lead in' or segments[pre_index].type == 'plunge':
@@ -206,6 +218,7 @@ class Parser:
         return operations
 
     def assign_cam_layer_height(self, cam_layer, later_cam_layers, layer_overlap):
+        """ Calculate the additive layer height that should be printed to before the CAM layer happens """
         if len(later_cam_layers) > 0:
             next_cam_layer_height = min([layer.cutting_height for layer in later_cam_layers])
             later_additive = [layer for layer in self.gcode_add_layers[:-1]
@@ -253,7 +266,8 @@ class Parser:
 
         layer_overlap = self.config['CamSettings']['layer_overlap']
 
-        # TODO assign layer height per layer in each operation independently. There is an issue if you have sparse CAM currently
+        # TODO assign layer height per layer in each operation independently.
+        # There is an issue if you have sparse CAM currently
         for i, cam_layer in enumerate(ordered_cam_layers):
             later_cam_layers = [
                 layer for layer in ordered_cam_layers if layer.cutting_height > cam_layer.cutting_height]
@@ -262,6 +276,10 @@ class Parser:
         return ordered_cam_layers
 
     def add_retracts(self, cam_layer, clearance_height=5):
+        """
+        Adds redamentary retracts between cam layers.
+        Required since some of the retracts are removed by `group_cam_segments`
+        """
         first_line = cam_layer.segments[0].lines[0]
         last_line = cam_layer.segments[-1].lines[-1]
 
@@ -282,6 +300,7 @@ class Parser:
         return merged_gcode
 
     def create_gcode_script(self, gcode):
+        """ Converts list of layers into a single string with appropriate tool changes """
         self.merged_gcode_script = '; ASMBL gcode created by https://github.com/AndyEveritt/ASMBL\n'
         prev_layer = gcode[0]
         for layer in gcode:
@@ -291,12 +310,14 @@ class Parser:
             self.merged_gcode_script += layer.gcode
 
     def set_last_additive_tool(self, layer):
+        """ Finds the last used tool in a layer and saves it in memory """
         if isinstance(layer, AdditiveGcodeLayer):
             process_list = layer.gcode.split('\nT')
             if len(process_list) > 1:
                 self.last_additive_tool = 'T' + process_list[-1].split('\n')[0]
 
     def tool_change(self, layer, prev_layer):
+        """ Adds any required tool changes between 2 layers """
         if type(layer) == AdditiveGcodeLayer:
             if layer.name == 'initialise' or prev_layer.name == 'initialise':
                 return  # no need to add a tool change

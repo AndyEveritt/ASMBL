@@ -2,8 +2,8 @@ import adsk.core
 import adsk.fusion
 import traceback
 
-from .fusion_api import Handlers
-from .fusion_api.Handlers import handlers
+from .src.fusion_api import Handlers
+from .src.fusion_api.Handlers import handlers
 
 
 def create_tab(workspace, tab_name):
