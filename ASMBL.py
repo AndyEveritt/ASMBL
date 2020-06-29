@@ -102,8 +102,10 @@ def run(context):
         # asmblSetupPanel = create_panel(camWorkspace, AsmblTab, 'Setup')
         
         asmblActionsPanel = create_panel(camWorkspace, AsmblTab, 'Actions')
+
+        # asmbl post process button
         asmblPostProcessControl = create_button(camWorkspace, AsmblTab, asmblActionsPanel,
-                                     'Post Process', Handlers.PostProcessCreatedEventHandler,
+                                     'Generate ASMBL Script', Handlers.PostProcessCreatedEventHandler,
                                      tooltip='Generate combined gcode file for ASMBL',
                                      resources='./resources/PostProcess')
         asmblPostProcessControl.isPromotedByDefault = True
@@ -113,8 +115,15 @@ def run(context):
             <br>Will not work if there are any more/fewer setups</br>'
         asmblPostProcessControl.commandDefinition.toolClipFilename = 'resources/GenerateAsmbl/tooltip.png'
             
-
-        pass
+        # cam post process button
+        camPostProcessControl = create_button(camWorkspace, AsmblTab, asmblActionsPanel,
+                                     'Post Process CAM', Handlers.PostProcessCamCreatedEventHandler,
+                                     tooltip='Generate subtractive gcode file for ASMBL',
+                                     resources='./resources/PostProcess')
+        camPostProcessControl.isPromotedByDefault = False
+        camPostProcessControl.isPromoted = False
+        camPostProcessControl.commandDefinition.tooltipDescription = '\
+            <br>Create the subtractive gcode for the standalone ASMBL program</br>'
 
     except:
         if ui:
