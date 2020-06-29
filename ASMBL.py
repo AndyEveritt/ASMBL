@@ -123,7 +123,7 @@ def run(context):
         camPostProcessControl.isPromotedByDefault = False
         camPostProcessControl.isPromoted = False
         camPostProcessControl.commandDefinition.tooltipDescription = '\
-            <br>Create the subtractive gcode for the standalone ASMBL program</br>'
+            <br>Post process all unsuppressed milling setups for the standalone ASMBL program</br>'
 
     except:
         if ui:
