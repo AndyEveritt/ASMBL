@@ -297,15 +297,13 @@ Full setup details for operations can be found here: [CAM Operation Setup](docs/
 ### Standalone
 
 - Generate and Simulate the full Setup to ensure in looks sensible
-- In the `Manufacturing` workspace, `Milling` tab; click `Actions` > `Post Process`
-- Select the `asmbl_cam.cps` config from the `post_processors` folder in this repo
-  - You may need to change the `Configuration Folder`
-- Set the `Output folder` to the desired project location
-- Click `Post`
+- In the `Manufacturing` workspace, `ASMBL` tab; click `Actions` > `Post Process Cam`
+- Click `Ok`
+
+>A new temporary file is created for each unsuppressed milling setup, rename or change the folder location of any generated file
+you want to keep else it may be deleted/overwritten.
 
 Fusion will try to open the generated gcode file in VSCode by default, if you don't have it installed it will prompt you to download it. This is entirely up to you.
-
-> Planned to be streamlined into a single button in a future update
 
 #### Config
 
