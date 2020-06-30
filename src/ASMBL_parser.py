@@ -182,7 +182,7 @@ class Parser:
         cutting_height = cutting_segments[0].height
         for cutting_segment in cutting_segments[1:]:
             # TODO logic needs fixing to deal with non planar and planar segments in same operation
-            if cutting_segment.height == cutting_height or cutting_segment.planar is False:
+            if cutting_segment.height == cutting_height or cutting_segment.planar is False or len(cutting_segment.lines) == 1:
                 cutting_group.append(cutting_segment)
                 cutting_height = cutting_segment.height
             else:

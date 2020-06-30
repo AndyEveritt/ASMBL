@@ -68,8 +68,7 @@ def generateAllTootpaths(ui, cam):
     ui.messageBox(message)
 
 
-def postToolpaths(ui, cam, viewResult):
-    # Check CAM data exists.
+def get_setups(ui, cam):
     if not cam:
         ui.messageBox('No CAM data exists in the active document.')
         return
@@ -81,6 +80,23 @@ def postToolpaths(ui, cam, viewResult):
 
     # Verify that there are any setups.
     setups = [setup for setup in cam.setups if not setup.isSuppressed]
+
+    return setups
+
+
+def remove_old_file(path, file_name):
+    file_path = os.path.join(path, file_name)
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+    # ensure file deleted
+    while os.path.exists(file_path):
+        pass
+
+
+def postToolpaths(ui, cam, viewResult):
+    # get any unsuppressed setups.
+    setups = get_setups(ui, cam)
 
     setupsCount = len(setups)
     if setupsCount < 2:
@@ -133,6 +149,51 @@ def postToolpaths(ui, cam, viewResult):
             os.system('open "%s"' % outputFolder)
         elif (os.name == 'nt'):
             os.startfile(outputFolder)
+
+
+def postCamToolpath(ui, cam, setup, units, output_folder, part_name):
+    setup_operation_type = None
+    # verify there are operations in setup
+    if setup.operations.count == 0:
+        ui.messageBox('No CAM operations exist in {}.'.format(setup.name))
+        return
+
+    try:
+        setup_operation_type = setup.operationType
+    except:
+        pass  # there is a bug in Fusion as of writing that means Additive setups don't have an operation type
+
+    if setup_operation_type == adsk.cam.OperationTypes.MillingOperation:
+        # remove old files
+        programName = part_name + '_' + setup.name
+        remove_old_file(output_folder, programName)
+
+        # get post processor
+        postConfig = os.path.join(Path(__file__).parents[2], 'post_processors', 'asmbl_cam.cps')
+
+        # create the postInput object
+        postInput = adsk.cam.PostProcessInput.create(programName, postConfig, output_folder, units)
+
+        cam.postProcess(setup, postInput)
+
+        start = time.time()
+        file_path = os.path.join(output_folder, programName + '.gcode')
+        while not os.path.exists(file_path):
+            if time.time() > start + 10:
+                ui.messageBox('Posting timed out')
+                return
+            pass    # wait until files exist
+
+        checkpoint = time.time()
+        while True:
+            if time.time() > checkpoint + 10:
+                ui.messageBox('Permission Error timed out')
+                return
+            try:
+                open(file_path)
+                break
+            except PermissionError:
+                continue
 
 
 # Event handler that reacts when the command definitio is executed which
@@ -331,3 +392,93 @@ class PostProcessExecuteHandler(adsk.core.CommandEventHandler):
             return
 
         ui.messageBox('ASMBL gcode has been successfully created. File saved in \'~/Asmbl/output/\'')
+
+
+# Event handler that reacts when the command definitio is executed which
+# results in the command being created and this event being fired.
+class PostProcessCamCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
+    def __init__(self):
+        super().__init__()
+
+    def notify(self, args):
+        try:
+            app = adsk.core.Application.get()
+            ui = app.userInterface
+
+            # Get the command that was created.
+            cmd = adsk.core.Command.cast(args.command)
+
+            # Connect to the execute event.
+            onExecute = PostProcessCamExecuteHandler()
+            cmd.execute.add(onExecute)
+            handlers.append(onExecute)
+
+            # Get the CommandInputs collection associated with the command.
+            inputs = cmd.commandInputs
+
+            # Create settings tab inputs
+            tabCmdInputSettings = inputs.addTabCommandInput('settings', 'Settings')
+            tabSettingsChildInputs = tabCmdInputSettings.children
+
+            # Create bool value input to check whether you should generate toolpaths.
+            generateToolpathsInput = tabSettingsChildInputs.addBoolValueInput(
+                'generateToolpaths', 'Generate Toolpaths', True, '', False)
+            generateToolpathsInput.tooltip = 'Regenerated all toolpaths.'
+
+        except:
+            ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
+
+
+class PostProcessCamExecuteHandler(adsk.core.CommandEventHandler):
+    # Event handler for the execute event.
+    def __init__(self):
+        super().__init__()
+
+    def notify(self, args):
+        app = adsk.core.Application.get()
+        ui = app.userInterface
+
+        eventArgs = adsk.core.CommandEventArgs.cast(args)
+
+        # Get the values from the command inputs.
+        inputs = eventArgs.command.commandInputs
+
+        generateToolpaths = inputs.itemById('generateToolpaths').value
+
+        doc = app.activeDocument
+        products = doc.products
+        product = products.itemByProductType('CAMProductType')
+        cam = adsk.cam.CAM.cast(product)
+
+        if generateToolpaths:
+            try:
+                generateAllTootpaths(ui, cam)
+            except:
+                ui.messageBox('Failed generating toolpaths:\n{}'.format(traceback.format_exc()))
+                return
+
+        try:
+            output_folder = os.path.expanduser('~/Asmbl/output/standalone/')
+
+            # get any unsuppressed setups.
+            setups = get_setups(ui, cam)
+
+            # specify the NC file output units
+            units = adsk.cam.PostOutputUnitOptions.DocumentUnitsOutput
+
+            # find part name
+            part_name = doc.name
+
+            for setup in setups:
+                postCamToolpath(ui, cam, setup, units, output_folder, part_name)
+
+        except:
+            ui.messageBox('Failed posting toolpaths:\n{}'.format(traceback.format_exc()))
+            return
+
+        if (os.name == 'posix'):
+            os.system('open "%s"' % output_folder)
+        elif (os.name == 'nt'):
+            os.startfile(output_folder)
+
+        ui.messageBox('Milling Setup Post Processing Complete.\nFile saved in \'{}\''.format(output_folder))
