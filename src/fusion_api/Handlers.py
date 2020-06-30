@@ -151,33 +151,33 @@ def postToolpaths(ui, cam, viewResult):
             os.startfile(outputFolder)
 
 
-def postCamToolpath(ui, cam, setup, units, outputFolder):
-    setupOperationType = None
+def postCamToolpath(ui, cam, setup, units, output_folder, part_name):
+    setup_operation_type = None
     # verify there are operations in setup
     if setup.operations.count == 0:
         ui.messageBox('No CAM operations exist in {}.'.format(setup.name))
         return
 
     try:
-        setupOperationType = setup.operationType
+        setup_operation_type = setup.operationType
     except:
         pass  # there is a bug in Fusion as of writing that means Additive setups don't have an operation type
 
-    if setupOperationType == adsk.cam.OperationTypes.MillingOperation:
+    if setup_operation_type == adsk.cam.OperationTypes.MillingOperation:
         # remove old files
-        programName = 'tmp_' + setup.name
-        remove_old_file(outputFolder, programName)
+        programName = part_name + '_' + setup.name
+        remove_old_file(output_folder, programName)
 
         # get post processor
         postConfig = os.path.join(Path(__file__).parents[2], 'post_processors', 'asmbl_cam.cps')
 
         # create the postInput object
-        postInput = adsk.cam.PostProcessInput.create(programName, postConfig, outputFolder, units)
+        postInput = adsk.cam.PostProcessInput.create(programName, postConfig, output_folder, units)
 
         cam.postProcess(setup, postInput)
 
         start = time.time()
-        file_path = os.path.join(outputFolder, programName + '.gcode')
+        file_path = os.path.join(output_folder, programName + '.gcode')
         while not os.path.exists(file_path):
             if time.time() > start + 10:
                 ui.messageBox('Posting timed out')
@@ -458,7 +458,7 @@ class PostProcessCamExecuteHandler(adsk.core.CommandEventHandler):
                 return
 
         try:
-            outputFolder = os.path.expanduser('~/Asmbl/output/standalone/')
+            output_folder = os.path.expanduser('~/Asmbl/output/standalone/')
 
             # get any unsuppressed setups.
             setups = get_setups(ui, cam)
@@ -466,16 +466,19 @@ class PostProcessCamExecuteHandler(adsk.core.CommandEventHandler):
             # specify the NC file output units
             units = adsk.cam.PostOutputUnitOptions.DocumentUnitsOutput
 
+            # find part name
+            part_name = doc.name
+
             for setup in setups:
-                postCamToolpath(ui, cam, setup, units, outputFolder)
+                postCamToolpath(ui, cam, setup, units, output_folder, part_name)
 
         except:
             ui.messageBox('Failed posting toolpaths:\n{}'.format(traceback.format_exc()))
             return
 
         if (os.name == 'posix'):
-            os.system('open "%s"' % outputFolder)
+            os.system('open "%s"' % output_folder)
         elif (os.name == 'nt'):
-            os.startfile(outputFolder)
+            os.startfile(output_folder)
 
-        ui.messageBox('Milling Setup Post Processing Complete.\nFile saved in \'{}\''.format(outputFolder))
+        ui.messageBox('Milling Setup Post Processing Complete.\nFile saved in \'{}\''.format(output_folder))
