@@ -107,7 +107,7 @@ def run(context):
         asmblPostProcessControl = create_button(camWorkspace, AsmblTab, asmblActionsPanel,
                                      'Generate ASMBL Script', Handlers.PostProcessCreatedEventHandler,
                                      tooltip='Generate combined gcode file for ASMBL',
-                                     resources='./resources/PostProcess')
+                                     resources='./resources/GenerateAsmbl')
         asmblPostProcessControl.isPromotedByDefault = True
         asmblPostProcessControl.isPromoted = True
         asmblPostProcessControl.commandDefinition.tooltipDescription = '\
