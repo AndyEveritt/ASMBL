@@ -368,10 +368,6 @@ Close Fusion 360 and overwrite the contents of the ASMBL repo folder with the la
 
 If you want Fusion to automatically detect the update then make sure the folder names are the same, otherwise repeat this step with the new folder [Fusion 360 Add-in](#fusion-360-add-in).
 
-# Contributions
-
-Process tbd, open to contributions.
-
 # Authors and Acknowledgment
 
 | Author        | Contribution |
@@ -381,4 +377,4 @@ Process tbd, open to contributions.
 
 # License
 
-GPL-3.0
+LGPL-3.0
