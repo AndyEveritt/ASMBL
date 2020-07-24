@@ -4,6 +4,21 @@
 
 This code is designed to create a gcode file suitable for Additive & Subtractive Manufacturing By Layer (ASMBL).
 
+## What is ASMBL? 
+
+ASMBL is a manufacturing technique which combines FDM 3D printing with traditional milling. 
+
+The additive and subtractive tools are alternated throughout the print so that milling of otherwise impossible to reach features is now possible. 
+
+## What does the repo do? 
+
+Historically, combining an additive and subtractive gcode file has needed to be done manually. This is an arduous process that is only realistically feasible for simple shapes. 
+
+This repo automatically merges a milling gcode file into a FDM gcode file; so that each milling segment is merged only after the part has been printed to the required height. 
+This merging is also compatible with non-planar milling operations that occur over a range of print layers (such as as chamfers or fillets), allowing the staircase effect typically found in FDM parts to be removed from your print. . 
+
+## How it can be used? 
+
 There are 2 main ways this repo can be used.
 
 - As a standalone program that takes 2 input files
