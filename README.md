@@ -111,7 +111,7 @@ This can be done by:
 
 ## Setting up the code for standalone use (Simplify3D)
 
-Download the following files from the releases page:
+Download the following files from the [releases](https://github.com/AndyEveritt/ASMBL/releases) page:
 
 - `ASMBL.exe`
 - `config.json`
