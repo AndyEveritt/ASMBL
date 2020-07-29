@@ -173,9 +173,9 @@ First you need to create an offset of your model, this will control how much cut
 - Enter the `Additive` Tab in the `Manufacturing` workspace in Fusion360.
 - Create a new setup
   - Click `Select` Machine
-  - Import the `E3D - Tool Changer.machine` profile from the `settings` folder of this repo
+  - Import the [`E3D - Tool Changer.machine`](https://github.com/AndyEveritt/ASMBL/blob/master/settings/E3D%20-%20Tool%20Changer.machine) profile from the [`settings`](https://github.com/AndyEveritt/ASMBL/tree/master/settings) folder of this repo
   - Click `Select` next to `Print Settings`
-  - Import the `ASMBL.printsetting` profile from the `settings` folder of this repo
+  - Import the [`ASMBL.printsetting`](https://github.com/AndyEveritt/ASMBL/blob/master/settings/ASMBL.printsetting) profile from the [`settings`](https://github.com/AndyEveritt/ASMBL/tree/master/settings) folder of this repo
   - Under `Model` select the offset body created earlier
 
 Workspace:
@@ -270,7 +270,7 @@ otherwise, this program will automatically replace any retracts/transitions Fusi
 
 #### Tool Config
 
-You can import our tool config by opening the `Tool Library` then right clicking on either the Document, `Cloud`, or `Local` then `Import Tool Library`. The library to import is located in this repo in `settings`/`ASMBL.tools`
+You can import our tool config by opening the `Tool Library` then right clicking on either the Document, `Cloud`, or `Local` then `Import Tool Library`. The library to import is located in this repo in [`settings`/`ASMBL.tools`](https://github.com/AndyEveritt/ASMBL/blob/master/settings/ASMBL.tools)
 
 <img src="docs/usage/images/fusion_cam_tool_import.png" width=480>
 
