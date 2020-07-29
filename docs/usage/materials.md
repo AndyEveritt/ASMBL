@@ -21,3 +21,6 @@ The standard cut-in amounts for all materials (unless otherwise stated) is:
   - Step down 0.6 mm (2 layers)
   - Step over 0.2 mm
   
+The vertical **step over** and top surface **step down** is the amount of offset you will need to apply to your model.
+
+The vertical **step down** and top surface **step over** is the amount set in the milling toolpath
