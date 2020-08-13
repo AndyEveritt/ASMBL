@@ -148,6 +148,8 @@ The additive gcode can be setup in various ways.
 
 > **<font color="red">DO NOT TURN OFF THE RAFT</font> UNLESS YOU KNOW WHAT YOU ARE DOING...IT IS VERY EASY TO CUT INTO THE BED AND BREAK THE TOOL**
 
+> If you do remove the raft, make sure the part is placed flat on the bed.
+
 ### Fusion360
 
 First you need to create an offset of your model, this will control how much cut-in you have.
