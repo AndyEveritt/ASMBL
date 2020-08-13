@@ -10,6 +10,12 @@ ASMBL is a manufacturing technique which combines FDM 3D printing with tradition
 
 The additive and subtractive tools are alternated throughout the print so that milling of otherwise impossible to reach features is now possible. 
 
+### Useful Links
+
+[E3D Toolchanger Milling Tool - Thingiverse](https://www.thingiverse.com/thing:4206827)
+
+https://e3d-online.com/blogs/news/asmbl
+
 ## What does the repo do? 
 
 Historically, combining an additive and subtractive gcode file has needed to be done manually. This is an arduous process that is only realistically feasible for simple shapes. 
