@@ -219,6 +219,25 @@ class Parser:
 
     def assign_cam_layer_height(self, cam_layer, later_cam_layers, layer_overlap):
         """ Calculate the additive layer height that should be printed to before the CAM layer happens """
+        if not cam_layer.planar:
+            cam_layer_height = cam_layer.cutting_height
+            later_additive = [layer for layer in self.gcode_add_layers[:-1]
+                              if layer.layer_height > cam_layer_height]
+
+            if layer_overlap == 0:
+                cam_layer.layer_height = cam_layer_height
+
+            elif len(later_additive) == 0:
+                cam_layer.layer_height = cam_layer_height
+
+            elif len(later_additive) >= layer_overlap:
+                cam_layer.layer_height = later_additive[layer_overlap - 1].layer_height
+
+            else:
+                cam_layer.layer_height = later_additive[-1].layer_height
+
+            return
+
         if len(later_cam_layers) > 0:
             next_cam_layer_height = min([layer.cutting_height for layer in later_cam_layers])
             later_additive = [layer for layer in self.gcode_add_layers[:-1]
