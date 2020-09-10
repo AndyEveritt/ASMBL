@@ -1,2 +1,2 @@
-make-exe:
-	pyinstaller main.py --onefile --name ASMBL
+exe:
+	pyinstaller main.py --onefile --name ASMBL-dev
