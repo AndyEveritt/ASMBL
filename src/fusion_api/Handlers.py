@@ -388,6 +388,7 @@ class PostProcessExecuteHandler(adsk.core.CommandEventHandler):
         # ui.messageBox(config.__str__())
 
         try:
+            time.sleep(1) # be sure files are written completely
             asmbl_parser = Parser(config, progress)
 
             outputFolder = os.path.expanduser('~/Asmbl/output/')
