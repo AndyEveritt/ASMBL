@@ -4,6 +4,8 @@ import adsk.fusion
 import traceback
 import time
 import os
+import sys
+import subprocess
 
 from ..ASMBL_parser import Parser
 
@@ -391,10 +393,11 @@ class PostProcessExecuteHandler(adsk.core.CommandEventHandler):
             outputFolder = os.path.expanduser('~/Asmbl/output/')
             asmbl_parser.create_output_file(asmbl_parser.merged_gcode_script, outputFolder)
 
-            if (os.name == 'posix'):
-                os.system('open "%s"' % outputFolder)
-            elif (os.name == 'nt'):
+            if sys.platform == 'win32':
                 os.startfile(outputFolder)
+            else:
+                opener = 'open' if sys.platform == 'darwin' else 'xdg-open'
+                subprocess.call([opener, outputFolder])
         except:
             ui.messageBox('Failed combing gcode files:\n{}'.format(traceback.format_exc()))
             return
@@ -484,9 +487,10 @@ class PostProcessCamExecuteHandler(adsk.core.CommandEventHandler):
             ui.messageBox('Failed posting toolpaths:\n{}'.format(traceback.format_exc()))
             return
 
-        if (os.name == 'posix'):
-            os.system('open "%s"' % output_folder)
-        elif (os.name == 'nt'):
+        if sys.platform == 'win32':
             os.startfile(output_folder)
+        else:
+            opener = 'open' if sys.platform == 'darwin' else 'xdg-open'
+            subprocess.call([opener, output_folder])
 
         ui.messageBox('Milling Setup Post Processing Complete.\nFile saved in \'{}\''.format(output_folder))
