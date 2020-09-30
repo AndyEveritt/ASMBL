@@ -8,6 +8,7 @@ import sys
 import subprocess
 
 from ..ASMBL_parser import Parser
+from .. import utils
 
 # Global list to keep all event handlers in scope.
 # This is only needed with Python.
@@ -388,17 +389,13 @@ class PostProcessExecuteHandler(adsk.core.CommandEventHandler):
         # ui.messageBox(config.__str__())
 
         try:
-            time.sleep(1) # be sure files are written completely
+            time.sleep(1)   # be sure files are written completely
             asmbl_parser = Parser(config, progress)
 
             outputFolder = os.path.expanduser('~/Asmbl/output/')
             asmbl_parser.create_output_file(asmbl_parser.merged_gcode_script, outputFolder)
 
-            if sys.platform == 'win32':
-                os.startfile(outputFolder)
-            else:
-                opener = 'open' if sys.platform == 'darwin' else 'xdg-open'
-                subprocess.call([opener, outputFolder])
+            utils.open_file(outputFolder)
         except:
             ui.messageBox('Failed combing gcode files:\n{}'.format(traceback.format_exc()))
             return
@@ -488,10 +485,6 @@ class PostProcessCamExecuteHandler(adsk.core.CommandEventHandler):
             ui.messageBox('Failed posting toolpaths:\n{}'.format(traceback.format_exc()))
             return
 
-        if sys.platform == 'win32':
-            os.startfile(output_folder)
-        else:
-            opener = 'open' if sys.platform == 'darwin' else 'xdg-open'
-            subprocess.call([opener, output_folder])
+        utils.open_file(output_folder)
 
         ui.messageBox('Milling Setup Post Processing Complete.\nFile saved in \'{}\''.format(output_folder))
