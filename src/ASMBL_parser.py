@@ -157,10 +157,14 @@ class Parser:
         """
         pre_index = cutting_group[0].index - 1
         post_index = cutting_group[-1].index + 1
-        if segments[pre_index].type == 'lead in' or segments[pre_index].type == 'plunge':
+        if segments[pre_index].type in ('lead in', 'plunge'):
             start_index = pre_index
         else:
             start_index = cutting_group[0].index
+
+        # warn user if a bad linking setting are detected
+        if segments[pre_index].type in ('transition', 'helix_ramp', 'profile_ramp', 'ramp'):
+            print('CAM Linking may be set incorrectly')
 
         if segments[post_index].type == 'lead out':
             end_index = post_index
