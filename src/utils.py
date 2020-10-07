@@ -1,3 +1,9 @@
+import sys
+import os
+import subprocess
+import time
+
+
 def convert_relative(gcode_abs):
     """ Converts absolute extrusion gcode into relative extrusion gcode """
     absolute_mode = False
@@ -104,3 +110,12 @@ def find_maxima(numbers):
                     prev_increasing = False
 
     return maxima
+
+
+def open_file(path):
+    if sys.platform == 'win32':
+        path = os.path.normpath(path)
+        os.startfile(path, 'open')
+    else:
+        opener = 'open' if sys.platform == 'darwin' else 'xdg-open'
+        subprocess.call([opener, path])

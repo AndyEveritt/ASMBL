@@ -1,4 +1,5 @@
 import sys
+import subprocess
 import os
 import re
 from math import (
@@ -330,7 +331,7 @@ class Parser:
         f.close()
 
         try:
-            os.startfile(file_path)
+            utils.open_file(file_path)
         except FileNotFoundError:
             pass
 
