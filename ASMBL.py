@@ -38,7 +38,6 @@ def create_panel(workspace, tab, panel_name):
 def create_button(workspace, tab, panel, button_name, CreatedEventHandler, tooltip=None, resources=''):
     # We want this panel to be visible:
     workspace.activate()
-    panel.isVisible = True
 
     app = adsk.core.Application.get()
     ui = app.userInterface

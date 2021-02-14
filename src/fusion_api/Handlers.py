@@ -136,7 +136,7 @@ def postToolpaths(ui, cam, viewResult):
 
             cam.postProcess(setup, postInput)
 
-        elif setupOperationType == None:
+        elif setupOperationType == adsk.cam.OperationTypes.AdditiveOperation:
             programName = 'tmpAdditive'
             postConfig = os.path.join(Path(__file__).parents[2], 'post_processors', 'asmbl_fff.cps')
 
@@ -400,6 +400,7 @@ class PostProcessExecuteHandler(adsk.core.CommandEventHandler):
             ui.messageBox('Failed combing gcode files:\n{}'.format(traceback.format_exc()))
             return
 
+        progress.hide()
         ui.messageBox('ASMBL gcode has been successfully created. File saved in \'~/Asmbl/output/\'')
 
 
