@@ -18,7 +18,7 @@ def convert_relative(gcode_abs):
     gcode_rel = ''
 
     for line in lines:
-        if line.command[0] == ';':
+        if line.type == Commands.COMMENT:
             gcode_rel += line.to_gcode + '\n'
             continue
 
@@ -55,27 +55,24 @@ def convert_relative(gcode_abs):
 
 
 def offset_gcode(gcode, offset):
-    gcode_segments = gcode.split(' ')
-    offset_gcode = ''
-    for gcode_segment in gcode_segments:
-        if gcode_segment[0] == 'X':
-            x_pos = float(gcode_segment[1:])
-            x_pos += offset[0]
-            gcode_segment = gcode_segment[0] + str(x_pos)
+    parsed_gcode = GcodeParser(gcode).lines[0]
 
-        elif gcode_segment[0] == 'Y':
-            y_pos = float(gcode_segment[1:])
-            y_pos += offset[1]
-            gcode_segment = gcode_segment[0] + str(y_pos)
+    if parsed_gcode.get_param('X') is not None:
+        x_pos = parsed_gcode.get_param('X')
+        x_pos += offset[0]
+        parsed_gcode.update_param('X', x_pos)
 
-        elif gcode_segment[0] == 'Z':
-            z_pos = float(gcode_segment[1:])
-            z_pos += offset[2]
-            gcode_segment = gcode_segment[0] + str(z_pos)
+    if parsed_gcode.get_param('Y') is not None:
+        y_pos = parsed_gcode.get_param('Y')
+        y_pos += offset[1]
+        parsed_gcode.update_param('Y', y_pos)
 
-        offset_gcode += ' ' + gcode_segment
+    if parsed_gcode.get_param('Z') is not None:
+        z_pos = parsed_gcode.get_param('Z')
+        z_pos += offset[2]
+        parsed_gcode.update_param('Z', z_pos)
 
-    return offset_gcode[1:]
+    return parsed_gcode.to_gcode
 
 
 def find_maxima(numbers):
