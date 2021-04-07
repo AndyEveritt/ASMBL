@@ -155,17 +155,19 @@ class Parser:
         Add lead in to start of group of cutting segments, and lead out to end if they exist.
         This is required to ensure the cutter does not miss any stock for certain toolpaths
         """
-        pre_index = cutting_group[0].index - 1
-        post_index = cutting_group[-1].index + 1
-        if segments[pre_index].type == 'lead in' or segments[pre_index].type == 'plunge':
+        start_index = cutting_group[0].index
+        pre_index = start_index - 1 if start_index - 1 >= 0 else start_index
+        if segments[pre_index].type in ('lead in', 'plunge'):
             start_index = pre_index
-        else:
-            start_index = cutting_group[0].index
 
+        # warn user if a bad linking setting are detected
+        if segments[pre_index].type in ('helix_ramp', 'profile_ramp', 'ramp'):
+            print('CAM Linking may be set incorrectly')
+
+        end_index = cutting_group[-1].index
+        post_index = end_index + 1 if end_index + 1 <= len(segments) - 1 else end_index
         if segments[post_index].type == 'lead out':
             end_index = post_index
-        else:
-            end_index = cutting_group[-1].index
 
         return segments[start_index:end_index+1]
 
@@ -313,7 +315,7 @@ class Parser:
             if layer.name == 'initialise' or prev_layer.name == 'initialise':
                 return  # no need to add a tool change
             first_gcode = layer.gcode.split('\n')[1]
-            if first_gcode[0] is not 'T':
+            if first_gcode[0] != 'T':
                 self.merged_gcode_script += self.last_additive_tool + '\n'
         elif type(layer) == CamGcodeLayer:
             self.merged_gcode_script += layer.tool + '\n'
