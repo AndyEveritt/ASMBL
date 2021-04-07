@@ -1,5 +1,7 @@
 from math import inf
 
+from .gcode_parser import GcodeParser, Commands
+
 
 class AdditiveGcodeLayer:
     """ Stores a complete layer of gcode produced in Simplify3d """
@@ -11,33 +13,24 @@ class AdditiveGcodeLayer:
 
         self.remove_park_gcode()
 
-        if name is None:
-            self.name = self.get_name(self.gcode)
-
         if layer_height is None:
             self.layer_height = self.get_layer_height(self.gcode)
 
-    def get_name(self, gcode):
-        return gcode.split(',')[0][2:]
-
     def get_layer_height(self, gcode):
         height = None
-        lines = gcode.split('\n')
+        lines = GcodeParser(gcode, include_comments=True).lines
 
         # Check for Simplify3D end of file code
-        if lines[0] == '; layer end':
+        if lines[0].to_gcode == '; layer end':
             height = inf
 
         else:
             line_heights = []
             for line in lines:
-                if line == '':
+                if line.type == Commands.COMMENT:
                     continue
-                if line[0] == ';':
-                    continue
-                line_segments = line.split('Z')
-                if len(line_segments) > 1:
-                    line_height = float(line_segments[1].split(' ')[0])
+                line_height = line.get_param('Z')
+                if line_height is not None:
                     line_heights.append(line_height)
 
             height = min(line_heights)
