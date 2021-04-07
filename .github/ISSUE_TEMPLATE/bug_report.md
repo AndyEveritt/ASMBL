@@ -2,7 +2,7 @@
 name: Bug report
 about: Create a report to help us improve
 title: ''
-labels: ''
+labels: bug
 assignees: AndyEveritt
 
 ---
@@ -37,11 +37,11 @@ _A clear and concise description of what you expected to happen._
 _If applicable, add screenshots to help explain your problem._
 
 ### Project Files
-_Provide the `tmpAdditive.gcode` & `tmpSubtractive.gcode` files that cause the issue._
-_If possible, provide the project setup files:
-  - .3MF (Prusa/Super Slicer)
-  - .factory (Simplify3D)
-  - .f3d (Fusion360)
+- _Provide the `tmpAdditive.gcode` & `tmpSubtractive.gcode` files that cause the issue._
+- _If possible, also provide the project setup files:_
+  - _.3MF (Prusa/Super Slicer)_
+  - _.factory (Simplify3D)_
+  - _.f3d (Fusion360)_
 
 ### Additional context
-Add any other context about the problem here.
+_Add any other context about the problem here._
