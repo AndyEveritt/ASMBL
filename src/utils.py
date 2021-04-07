@@ -1,7 +1,10 @@
 import sys
+import re
 import os
 import subprocess
 import time
+
+from .gcode_parser import GcodeParser, Commands
 
 
 def convert_relative(gcode_abs):
@@ -10,46 +13,43 @@ def convert_relative(gcode_abs):
     last_tool = None
     last_e = {}     # {'tool': last extrusion value}
 
-    lines = gcode_abs.split('\n')
+    lines = GcodeParser(gcode_abs, include_comments=True).lines
 
     gcode_rel = ''
 
     for line in lines:
-        if line == '':
+        if line.command[0] == ';':
+            gcode_rel += line.to_gcode + '\n'
             continue
 
-        line_start = line.split(' ')[0]
         # Check for absolute extrusion
-        if line_start == ('M82'):
+        if line.command_str == 'M82':
             absolute_mode = True
-            line = 'M83'
+            line.command = ('M', 83)
 
         # Check for relative extrusion
-        elif line_start == ('M83'):
+        elif line.command_str == 'M83':
             absolute_mode = False
 
         # Check for tool change
-        elif line_start[0] == 'T':
-            last_tool = line_start
+        elif line.command[0] == 'T':
+            last_tool = line.command_str
 
         # Check for extrusion reset
-        elif line_start == 'G92':
-            extrusion_reset = line.split('E')[1]
+        elif line.command_str == 'G92':
+            extrusion_reset = line.get_param('E')
             last_e[last_tool] = extrusion_reset
 
         # Convert Extrusion coordinates to relative if in absolute mode
-        if absolute_mode:
-            if line_start == 'G0' or line_start == 'G1':
-                try:
-                    line_split = line.split('E')
-                    current_extrusion = line_split[1]
-                    extrusion_diff = float(current_extrusion) - float(last_e[last_tool])
-                    extrusion_diff = round(extrusion_diff, 3)
-                    last_e[last_tool] = current_extrusion
-                    line = line_split[0] + 'E' + str(extrusion_diff)
-                except IndexError:
-                    pass
-        gcode_rel += line + '\n'
+        if absolute_mode and line.type == Commands.MOVE:
+            current_extrusion = line.get_param('E')
+            if current_extrusion is not None:
+                extrusion_diff = float(current_extrusion) - float(last_e[last_tool])
+                extrusion_diff = round(extrusion_diff, 5)
+                last_e[last_tool] = current_extrusion
+                line.update_param('E', extrusion_diff)
+            
+        gcode_rel += line.to_gcode + '\n'
 
     return gcode_rel
 
