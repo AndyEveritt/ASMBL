@@ -315,7 +315,7 @@ class Parser:
             if layer.name == 'initialise' or prev_layer.name == 'initialise':
                 return  # no need to add a tool change
             first_gcode = layer.gcode.split('\n')[1]
-            if first_gcode[0] is not 'T':
+            if first_gcode[0] != 'T':
                 self.merged_gcode_script += self.last_additive_tool + '\n'
         elif type(layer) == CamGcodeLayer:
             self.merged_gcode_script += layer.tool + '\n'
