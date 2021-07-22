@@ -90,7 +90,7 @@ class Parser:
 
     def split_additive_layers(self, gcode_add):
         """ Takes Simplify3D gcode and splits in by layer """
-        tmp_list = re.split('(; LAYER_CHANGE)', gcode_add)
+        tmp_list = re.split('(\n; LAYER_CHANGE)', gcode_add)
 
         gcode_add_layers = []
         initialise_layer = AdditiveGcodeLayer(
@@ -111,7 +111,7 @@ class Parser:
                     layer, 'end', inf))
                 continue
 
-            gcode_add_layers.append(AdditiveGcodeLayer(layer, None))
+            gcode_add_layers.append(AdditiveGcodeLayer(layer, f"FFF layer {i}"))
 
         return gcode_add_layers
 
