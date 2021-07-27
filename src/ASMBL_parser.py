@@ -315,9 +315,9 @@ class Parser:
                 return  # no need to add a tool change
             first_gcode = layer.gcode.split('\n')[1]
             if first_gcode[0] != 'T':
-                self.merged_gcode_script += self.last_additive_tool + '\n'
+                self.merged_gcode_script += f"\n{self.last_additive_tool}\n"
         elif type(layer) == CamGcodeLayer:
-            self.merged_gcode_script += layer.tool + '\n'
+            self.merged_gcode_script += f"\n{layer.tool}\n"
 
     def create_output_file(self, gcode, folder_path="output/", relative_path=True):
         """ Saves the file to the output folder """
