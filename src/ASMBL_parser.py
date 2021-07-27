@@ -90,7 +90,7 @@ class Parser:
 
     def split_additive_layers(self, gcode_add):
         """ Takes Simplify3D gcode and splits in by layer """
-        tmp_list = re.split('(; layer)', gcode_add)
+        tmp_list = re.split('(\n; ASMBL_LAYER_CHANGE_FLAG)', gcode_add)
 
         gcode_add_layers = []
         initialise_layer = AdditiveGcodeLayer(
@@ -105,14 +105,13 @@ class Parser:
         for i in range(ceil(len(tmp_list)/2)):
 
             layer = tmp_list[2*i] + tmp_list[2*i+1]
-            name = layer.split(',')[0][2:]
 
             if 2*i + 1 == len(tmp_list) - 1:
                 gcode_add_layers.append(AdditiveGcodeLayer(
                     layer, 'end', inf))
                 continue
 
-            gcode_add_layers.append(AdditiveGcodeLayer(layer, name))
+            gcode_add_layers.append(AdditiveGcodeLayer(layer, f"FFF layer {i}"))
 
         return gcode_add_layers
 
@@ -316,9 +315,9 @@ class Parser:
                 return  # no need to add a tool change
             first_gcode = layer.gcode.split('\n')[1]
             if first_gcode[0] != 'T':
-                self.merged_gcode_script += self.last_additive_tool + '\n'
+                self.merged_gcode_script += f"\n{self.last_additive_tool}\n"
         elif type(layer) == CamGcodeLayer:
-            self.merged_gcode_script += layer.tool + '\n'
+            self.merged_gcode_script += f"\n{layer.tool}\n"
 
     def create_output_file(self, gcode, folder_path="output/", relative_path=True):
         """ Saves the file to the output folder """
