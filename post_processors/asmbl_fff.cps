@@ -134,6 +134,7 @@ function getPrinterGeometry() {
 
 function onClose() {
   writeComment("layer end,")
+  writeComment("ASMBL_LAYER_CHANGE_FLAG")
   writeComment("END OF GCODE");
   
   // turn off the ESC
@@ -224,6 +225,7 @@ function onExtrusionReset(length) {
 
 function onLayer(num) {
   writeComment("layer " + integerFormat.format(num) + " of " + integerFormat.format(layerCount) + ",");  // comment format to match Simplify3D
+  writeComment("ASMBL_LAYER_CHANGE_FLAG");  // layer change flag for ASMBL
 }
 
 // Temp controller not needed for ASMBL
